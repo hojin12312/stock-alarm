@@ -1,0 +1,22 @@
+# Gradle / Android build outputs
+.gradle/
+build/
+**/build/
+local.properties
+captures/
+*.iml
+.idea/
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# 단, dist/ 는 추적 (배포용 APK 보관 위치)
+!dist/
+!dist/**
