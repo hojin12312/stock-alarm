@@ -1,119 +1,80 @@
 # android-playground
 
-터미널만으로 운영하는 Android 네이티브(Kotlin + Jetpack Compose) 플레이그라운드. Android Studio GUI 없이 클로디가 편집→빌드→설치→실행→스크린샷까지 전부 CLI로 처리한다.
+터미널만으로 운영하는 Android 네이티브(Kotlin + Jetpack Compose) 플레이그라운드.
+Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지 전부 CLI로 처리한다.
 
-현재 들어 있는 앱: **주식 알리미 (StockAlarm)** — 한·미 주식 검색 + 관심목록 + 5/20일 이동평균 교차 알림.
+**현재 들어 있는 앱**: 주식 알리미 (Stock Alarm) — 한·미 주식 검색 + 관심목록 + 5/20MA 교차 알림 + 차트 디테일.
 
-## 환경 요구사항
+## 현재 상태 (2026-04-14 기준)
 
-| 항목 | 버전 | 설치 경로 |
-|---|---|---|
-| JDK | OpenJDK 17.0.18 (Homebrew) | `/opt/homebrew/opt/openjdk@17` |
-| Android SDK | API 34 | `~/Library/Android/sdk` → `/opt/homebrew/share/android-commandlinetools` (심볼릭 링크) |
-| Gradle | 8.7 (wrapper) | 프로젝트 내장 |
-| AGP | 8.3.2 | `build.gradle.kts` |
-| Kotlin | 1.9.23 | `build.gradle.kts` |
-| Compose BOM | 2024.05.00 | `app/build.gradle.kts` |
-| Compose Compiler | 1.5.11 | `app/build.gradle.kts` |
+- **버전**: `v0.2.0` (versionCode 2)
+- **GitHub**: https://github.com/hojin12312/stock-alarm (public)
+- **최신 APK**: `dist/stock-alarm-debug.apk` (~17.6 MB) — raw URL로 배포 중
+- **앱 아이콘**: 녹색 차트 + 원화 동전 (5 해상도 legacy + Adaptive Icon v26)
+- **마지막 검증**: 기본 플로우 + 차트 + 알림 + 데이터 유지 업데이트 전부 통과 (`docs/VERIFICATION.md`)
+- **루루 최종 확정 사항**:
+  - 데이터 소스는 Yahoo Finance 비공식 API 유지
+  - 매수/매도 라벨은 `5MA<20MA=매수` (문서 정의 그대로)
+  - WorkManager 15분 주기, 장 시각 게이팅은 도입 안 함 (리소스 영향 미미)
+  - `versionCode` 매 릴리스마다 증가, `./gradlew installDebug`로 관심목록 유지 업데이트
 
-**중요**:
-- JDK 21/25 쓰지 말 것. AGP 8.3.2는 **JDK 17 고정**.
-- 시스템 `gradle`(brew 9.4.1)은 쓰지 않는다. 항상 `./gradlew`로 wrapper 사용.
-- Apple Silicon이라 system image는 **arm64-v8a** 필수 (x86은 매우 느림).
+## 문서 인덱스
 
-## 환경변수
+| 파일 | 내용 |
+|---|---|
+| [`docs/STACK.md`](docs/STACK.md) | 스택·환경 요구사항·패키지 구조·의존성·데이터 소스·기능 목록 |
+| [`docs/RELEASE.md`](docs/RELEASE.md) | 버전 관리·릴리스 절차·**데이터 유지 업데이트**·GitHub 레포 운영 |
+| [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | 에뮬레이터 검증 루프·UI 자동 조작·DB 직접 조작·완료 시나리오 기록 |
+| [`README.md`](README.md) | 사용자용 (설치·업데이트 가이드·스크린샷·기술 스택 요약) |
 
-`~/.zshrc`에 등록되어 있음. 새 세션에선 자동 적용. 기존 세션에서는 `source ~/.zshrc`.
+다음 세션에서 특정 주제가 필요하면 위 파일들을 먼저 읽어. 이 `CLAUDE.md`는 **인덱스 + 빠른 시작**만 담는다.
+
+## 새 세션 진입 시 첫 체크
 
 ```bash
-export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
-export ANDROID_HOME="$HOME/Library/Android/sdk"
-export ANDROID_SDK_ROOT="$ANDROID_HOME"
-export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+# 1. 환경 확인
+./gradlew --version          # Gradle 8.7 + JVM 17 나와야 함
+adb devices                  # 에뮬레이터 떠 있는지
+./gradlew :app:compileDebugKotlin 2>&1 | tail -5   # 기존 코드가 컴파일 되는지
+
+# 2. 에뮬레이터 없으면 기동
+nohup emulator -avd pixel_api34 -no-snapshot-save -no-audio > /tmp/emulator.log 2>&1 &
+adb wait-for-device && adb shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 2; done; echo ok'
+
+# 3. 현재 git 상태 확인 (push 안 된 변경 있는지)
+cd ~/home_apps/android-playground && git status && git log --oneline -5
 ```
 
-## 프로젝트 구조
-
-```
-android-playground/
-├── settings.gradle.kts
-├── build.gradle.kts             # AGP/Kotlin/Serialization/KSP 플러그인
-├── gradle.properties
-├── gradlew / gradlew.bat        # Gradle wrapper (8.7)
-└── app/
-    ├── build.gradle.kts         # 의존성: Compose + Navigation + Retrofit + Room + WorkManager
-    └── src/main/
-        ├── AndroidManifest.xml  # INTERNET, POST_NOTIFICATIONS, .PlaygroundApp
-        └── java/com/example/playground/
-            ├── MainActivity.kt              # 알림 권한 요청 + setContent { PlaygroundApp() }
-            ├── PlaygroundApp.kt             # Application, WorkManager 15분 주기 enqueue
-            ├── di/ServiceLocator.kt         # Room/Retrofit/Repository/Notifier 싱글톤
-            ├── data/
-            │   ├── model/                    # MaStatus, Market, StockSearchResult, WatchedStock
-            │   ├── local/                    # Room: AppDatabase, WatchlistDao, Entity, Converters
-            │   ├── remote/                   # YahooFinanceApi(Retrofit), NetworkModule, dto/
-            │   └── repo/StockRepository.kt   # 검색·차트·이평선 갱신·교차 판정
-            ├── domain/MaCalculator.kt       # 5/20일 이평선 순수 함수
-            ├── notification/Notifier.kt     # 알림 채널 + 교차 전환 알림
-            ├── worker/MaCrossoverWorker.kt  # CoroutineWorker, 15분 주기 갱신·알림
-            └── ui/
-                ├── nav/                      # Destinations, PlaygroundNavHost (3탭 BottomBar)
-                ├── search/                   # 검색 탭 + ViewModel
-                ├── watchlist/                # 관심목록 탭 + ViewModel
-                └── dashboard/                # 대시보드 탭 + ViewModel + [지금 새로고침]
-```
-
-- **package/applicationId**: `com.example.playground`
-- **앱 이름**: `주식 알리미`
-- **minSdk**: 26, **compileSdk/targetSdk**: 34
-- UI 방식: **Jetpack Compose + Material3** (XML 레이아웃 사용 안 함)
-- 데이터: **Yahoo Finance 비공식 API** (`query2.finance.yahoo.com/v1/finance/search`, `query1.finance.yahoo.com/v8/finance/chart`)
-- 매수/매도 라벨: **5MA < 20MA → 매수**, **5MA > 20MA → 매도** (역추세/평균회귀 관점, company.txt 정의 그대로)
-
-## 개발 루프 (표준 워크플로우)
+## 표준 개발 루프
 
 ```bash
 cd ~/home_apps/android-playground
 
-# 1. 에뮬레이터 기동 (한 번만, 이미 떠 있으면 생략)
-nohup emulator -avd pixel_api34 -no-snapshot-save -no-audio > /tmp/emulator.log 2>&1 &
-adb wait-for-device && adb shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 2; done; echo ok'
-
-# 2. 편집 → 빌드 + 설치 한방
+# 편집 → 빌드 + 설치 한방 (내부적으로 adb install -r → 기존 DB 유지)
 ./gradlew installDebug
 
-# 3. 앱 실행
+# 앱 실행
 adb shell am start -n com.example.playground/.MainActivity
 
-# 4. 스크린샷 확인 (클로디가 Read로 볼 수 있음)
+# 스크린샷 확인
 adb exec-out screencap -p > /tmp/playground-screen.png
 
-# 5. 로그 보기
-adb logcat *:W com.example.playground:V
+# 로그 보기
+adb logcat -s StockRepository MaCrossoverWorker OkHttp
 ```
+
+UI 자동 조작·DB 직접 조작·알림 검증 방법은 `docs/VERIFICATION.md` 참고.
 
 ## 유용한 명령
 
 ```bash
-# 클린 빌드
-./gradlew clean assembleDebug
+./gradlew clean assembleDebug                     # 클린 빌드
+./gradlew :app:dependencies                        # 의존성 트리
+avdmanager list avd                                # AVD 목록
+adb emu kill                                       # 에뮬레이터 종료
+ls app/build/outputs/apk/debug/app-debug.apk       # APK 위치
 
-# 의존성 트리
-./gradlew :app:dependencies
-
-# AVD 목록
-avdmanager list avd
-
-# 실행 중 디바이스
-adb devices
-
-# 에뮬레이터 종료
-adb emu kill
-
-# APK 위치
-ls app/build/outputs/apk/debug/app-debug.apk
-
-# 앱 제거
+# 앱 제거 (데이터 소멸!) — 평상시엔 쓰지 말 것. 업데이트는 installDebug로.
 adb uninstall com.example.playground
 ```
 
@@ -123,48 +84,45 @@ adb uninstall com.example.playground
 |---|---|
 | 이름 | `pixel_api34` |
 | 디바이스 | Pixel 6 |
-| API | 34 (Android 14 "UpsideDownCake") |
+| API | 34 (Android 14) |
 | ABI | arm64-v8a, google_apis |
+| 해상도 | 1080 × 2400, density 420 |
 | 경로 | `~/.android/avd/pixel_api34.avd` |
+
+## 디렉토리 구조 (루트)
+
+```
+android-playground/
+├── CLAUDE.md                 ← 이 파일 (인덱스 + 빠른 시작)
+├── README.md                 ← 사용자용
+├── docs/                     ← 내부 문서 + 스크린샷 + 아이콘 원본
+│   ├── STACK.md              기술 스택·패키지 구조
+│   ├── RELEASE.md            릴리스·데이터 유지 업데이트
+│   ├── VERIFICATION.md       검증 방법·기록
+│   ├── app-icon.png          아이콘 원본 1024×1024
+│   └── 01-search.png … 06-notification.png
+├── dist/stock-alarm-debug.apk   ← 배포용 APK (git 추적)
+├── settings.gradle.kts
+├── build.gradle.kts          ← AGP/Kotlin/Serialization/KSP 플러그인
+├── gradle.properties
+├── gradlew / gradlew.bat
+└── app/                      ← 자세한 패키지 구조는 docs/STACK.md
+```
 
 ## 알려진 제약 / 함정
 
-- **에뮬레이터 창은 GUI**라 macOS 데스크탑에 뜸. 완전 헤드리스로 가려면 `emulator ... -no-window` 추가하고 `adb exec-out screencap`으로 화면 확인.
-- **Gradle 9 쓰면 AGP 8.3.2와 호환 안 됨**. wrapper의 `distributionUrl`은 반드시 `gradle-8.7-bin.zip`.
-- **ANDROID_HOME이 심볼릭 링크**(`~/Library/Android/sdk` → brew 경로). brew 업그레이드 시 `android-commandlinetools` cask가 그 경로를 재생성하므로 대부분 안전. 깨지면 `rm -rf ~/Library/Android/sdk && ln -s /opt/homebrew/share/android-commandlinetools ~/Library/Android/sdk`로 복구.
-- **첫 빌드는 오래 걸림** (Gradle 8.7 배포판 다운로드 + Compose 의존성 전부, 약 1~2분). 이후엔 캐시돼서 빠름.
-- sdkmanager 라이선스는 이미 전부 수락됨. 새 SDK 컴포넌트 추가 시 `yes | sdkmanager --licenses` 다시 돌려도 됨.
-
-## 검증 완료 기록 (2026-04-14, 주식 알리미)
-
-아래 시나리오가 에뮬레이터(`pixel_api34`)에서 전부 통과:
-
-1. `./gradlew installDebug` → BUILD SUCCESSFUL ✅
-2. 앱 콜드 스타트 → 검색 탭(주식 검색) 정상 렌더 ✅
-3. "samsung" 검색 → Yahoo Finance API에서 `005930.KS Samsung Electronics`, `207940.KS Samsung Biologics`, `489250.KS ETF` 등 응답 정상 파싱 ✅
-4. [+관심] 버튼 → "등록됨"으로 전환, 관심목록 탭에서 KR 칩과 함께 표시 ✅
-5. 대시보드 탭 → "대기" 상태 카드 표시 + 우상단 [지금 새로고침] 버튼 ✅
-6. [지금 새로고침] → Yahoo 차트 호출 → 5/20MA 계산:
-   - Samsung Electronics: 5MA 205,750 / 20MA 192,485 / 종가 207,250 → **매도** 배지 (5MA > 20MA) ✅
-   - Samsung Biologics: 5MA 1,567,200 / 20MA 1,569,000 / 종가 1,537,000 → **매수** 배지 ✅
-7. 교차 알림 검증: `run-as com.example.playground sqlite3` 로 `lastStatus`를 강제로 뒤집고 새로고침 → 알림 셰이드에 `[매수 전환] Samsung Biologics`, `[매도 전환] Samsung Electronics` 두 알림이 "주식 알리미" 채널로 정상 표시 ✅
-8. WorkManager: `PlaygroundApp.onCreate()`에서 `enqueueUniquePeriodicWork("ma_crossover_periodic", KEEP, 15분)` 등록 ✅
-
-## 백그라운드 동작·배포 관련 참고
-
-- WorkManager `Periodic` 15분이 *최소 주기*. Doze·앱 대기·제조사 절전 정책으로 실제 실행은 더 늦어질 수 있음. "분 단위 정확"이 필요하면 `AlarmManager.setExactAndAllowWhileIdle` + `SCHEDULE_EXACT_ALARM` 권한으로 격상 필요.
-- 사용자가 강제 종료(특히 샤오미·화웨이)하면 WorkManager 작업도 같이 죽음. Foreground Service나 FCM 서버 푸시가 아니면 100% 보장 불가.
-- 앱은 네이티브 라이브러리 없음 → 디버그 APK(`app/build/outputs/apk/debug/app-debug.apk`)는 minSdk 26+ 어떤 안드로이드 기기에도 사이드로딩 가능. 받는 쪽이 "출처를 알 수 없는 앱 허용" 켜야 함. 정식 배포는 `assembleRelease` + 자체 keystore 서명 필요.
-- Yahoo Finance 비공식 API라 스키마가 언제든 변할 수 있고 일부 통신사·국가에서 차단될 수 있음. 안정성이 필요하면 KIS OpenAPI 등 공식 소스로 교체.
-
----
+- **에뮬레이터 창은 GUI**라 macOS 데스크탑에 뜸. 헤드리스 원하면 `emulator ... -no-window`.
+- **Gradle 9는 AGP 8.3.2와 호환 안 됨**. wrapper `distributionUrl`은 `gradle-8.7-bin.zip` 고정.
+- **ANDROID_HOME이 심볼릭 링크** (`~/Library/Android/sdk` → `/opt/homebrew/share/android-commandlinetools`). brew 업그레이드 시 대부분 자동 복원되지만 깨지면 `rm -rf ~/Library/Android/sdk && ln -s /opt/homebrew/share/android-commandlinetools ~/Library/Android/sdk`.
+- **첫 빌드는 1-2분**. 이후엔 캐시돼서 빠름.
+- sdkmanager 라이선스는 전부 수락돼 있음. 새 컴포넌트 추가 시 `yes | sdkmanager --licenses`.
 
 ## 클로디를 위한 작업 메모
 
-- **새 세션 진입 시 첫 체크**: `./gradlew --version`이 Gradle 8.7 + JVM 17을 보여주는지, `adb devices`로 에뮬레이터 떠있는지 확인.
-- **UI 변경 검증**: 빌드→설치→실행 후 반드시 `screencap`으로 실제 렌더링 확인 (Compose preview는 못 쓰니까).
-- **uiautomator dump**: Compose 화면에서 좌표를 정확히 찾으려면 `adb shell uiautomator dump /sdcard/win.xml && adb pull /sdcard/win.xml /tmp/win.xml`로 view bounds 확인 후 `adb shell input tap`. 시각적 추정은 자주 빗나감.
-- **DB 직접 조작 (테스트용)**: `adb shell "run-as com.example.playground sqlite3 databases/playground.db 'SELECT * FROM watchlist;'"`. `lastStatus`를 강제로 뒤집어서 알림 트리거 검증할 때 쓴다.
-- **알림 셰이드 펼치기**: `adb shell cmd statusbar expand-notifications`로 알림 발송 검증.
-- **코드 스타일**: Compose 함수는 PascalCase, 파일당 하나의 최상위 Composable 권장. 수동 DI(ServiceLocator) 사용, Hilt는 도입 안 함.
+- **UI 변경 검증**: 빌드→설치→실행 후 반드시 `screencap`으로 실제 렌더링 확인 (Compose preview 없음).
+- **uiautomator dump로 좌표 먼저**: Compose 화면 탭할 땐 `adb shell uiautomator dump /sdcard/win.xml && adb pull /sdcard/win.xml /tmp/win.xml` → grep으로 bounds 확인 → `adb shell input tap`. 시각적 추정은 자주 빗나감.
+- **코드 스타일**: Compose 함수 PascalCase, 파일당 하나의 최상위 Composable 권장. 수동 DI(ServiceLocator) 사용, Hilt 도입 안 함.
 - **디자인/아키텍처 변경은 루루와 상의 후**. 버그 수정은 즉시 진행 OK.
+- **`adb uninstall` 금지 (평상시)**: Room DB 전부 날아감. 업데이트는 `./gradlew installDebug`로.
+- **릴리스 전 체크**: `app/build.gradle.kts`의 `versionCode` 증가 필수. 안 올리면 실기기 업데이트 거부됨.
+- **수정한 파일 Write 후에도 디스크에 반영 안 될 때가 있었음 (세션 1회)**: Write 직후 Read로 검증하는 습관. 이전 세션에서 `MainActivity.kt` 덮어쓰기가 한 번 실패했던 이력.
