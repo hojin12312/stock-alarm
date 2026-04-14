@@ -3,6 +3,7 @@ package com.example.playground.data.repo
 import android.util.Log
 import com.example.playground.data.local.WatchlistDao
 import com.example.playground.data.local.WatchlistEntity
+import com.example.playground.data.model.ChartData
 import com.example.playground.data.model.MaStatus
 import com.example.playground.data.model.Market
 import com.example.playground.data.model.StockSearchResult
@@ -65,6 +66,29 @@ class StockRepository(
         val raw = result.indicators?.quote?.firstOrNull()?.close ?: return emptyList()
         return raw.filterNotNull()
     }
+
+    suspend fun fetchChart(symbol: String, range: String = "3mo"): Result<ChartData> = runCatching {
+        val res = api.chart(symbol = symbol, range = range)
+        val result = res.chart.result?.firstOrNull()
+            ?: error("차트 응답이 비어 있어")
+        val rawCloses = result.indicators?.quote?.firstOrNull()?.close
+            ?: error("종가 데이터가 없어")
+        val rawTimestamps = result.timestamp
+        // null 종가가 섞여있는 인덱스는 건너뛴다 — timestamp도 같은 인덱스만 남김.
+        val pairs = rawCloses.mapIndexed { i, c -> i to c }
+            .mapNotNull { (i, c) -> if (c != null && i < rawTimestamps.size) rawTimestamps[i] to c else null }
+        val timestamps = pairs.map { it.first }
+        val closes = pairs.map { it.second }
+        val name = dao.getAll().firstOrNull { it.symbol == symbol }?.name ?: symbol
+        ChartData(
+            symbol = symbol,
+            name = name,
+            timestamps = timestamps,
+            closes = closes,
+            ma5Series = MaCalculator.movingAverageSeries(closes, 5),
+            ma20Series = MaCalculator.movingAverageSeries(closes, 20),
+        )
+    }.onFailure { Log.w(TAG, "fetchChart($symbol) failed", it) }
 
     /**
      * 최신 종가로 이평선 계산 후 DB 업데이트. 교차 발생 여부를 반환한다.

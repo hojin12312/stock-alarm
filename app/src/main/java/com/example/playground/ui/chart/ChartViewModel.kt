@@ -1,0 +1,61 @@
+package com.example.playground.ui.chart
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.example.playground.data.model.ChartData
+import com.example.playground.data.repo.StockRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+data class ChartUiState(
+    val loading: Boolean = false,
+    val data: ChartData? = null,
+    val range: String = "3mo",
+    val error: String? = null,
+)
+
+class ChartViewModel(
+    private val repo: StockRepository,
+    private val symbol: String,
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(ChartUiState(loading = true))
+    val state: StateFlow<ChartUiState> = _state.asStateFlow()
+
+    init {
+        load(_state.value.range)
+    }
+
+    fun selectRange(range: String) {
+        if (range == _state.value.range) return
+        _state.value = _state.value.copy(range = range)
+        load(range)
+    }
+
+    private fun load(range: String) {
+        _state.value = _state.value.copy(loading = true, error = null)
+        viewModelScope.launch {
+            val result = repo.fetchChart(symbol, range)
+            _state.value = if (result.isSuccess) {
+                _state.value.copy(loading = false, data = result.getOrNull())
+            } else {
+                _state.value.copy(
+                    loading = false,
+                    error = result.exceptionOrNull()?.message ?: "차트 로딩 실패",
+                )
+            }
+        }
+    }
+
+    class Factory(
+        private val repo: StockRepository,
+        private val symbol: String,
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            ChartViewModel(repo, symbol) as T
+    }
+}

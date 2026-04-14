@@ -18,4 +18,20 @@ object MaCalculator {
         val status = if (ma5 < ma20) MaStatus.BUY else MaStatus.SELL
         return MaSnapshot(ma5 = ma5, ma20 = ma20, status = status)
     }
+
+    /**
+     * 종가 리스트에서 단순 이동평균 시리즈를 만든다.
+     * window 미만 위치는 null. 차트 라인용.
+     */
+    fun movingAverageSeries(closes: List<Double>, window: Int): List<Double?> {
+        if (window <= 0) return emptyList()
+        return List(closes.size) { i ->
+            if (i + 1 < window) null
+            else {
+                var sum = 0.0
+                for (j in (i - window + 1)..i) sum += closes[j]
+                sum / window
+            }
+        }
+    }
 }

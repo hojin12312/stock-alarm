@@ -21,6 +21,7 @@ data class ChartErrorDto(
 
 @Serializable
 data class ChartResultDto(
+    val timestamp: List<Long> = emptyList(),
     val indicators: ChartIndicatorsDto? = null,
 )
 

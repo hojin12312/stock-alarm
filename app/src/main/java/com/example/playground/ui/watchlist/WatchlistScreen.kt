@@ -1,5 +1,6 @@
 package com.example.playground.ui.watchlist
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,6 +36,7 @@ import com.example.playground.data.model.WatchedStock
 fun WatchlistScreen(
     viewModel: WatchlistViewModel,
     contentPadding: PaddingValues,
+    onStockClick: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -67,6 +69,7 @@ fun WatchlistScreen(
                 items(state.items, key = { it.symbol }) { stock ->
                     WatchedRow(
                         stock = stock,
+                        onClick = { onStockClick(stock.symbol) },
                         onDelete = { viewModel.remove(stock.symbol) },
                     )
                 }
@@ -78,10 +81,13 @@ fun WatchlistScreen(
 @Composable
 private fun WatchedRow(
     stock: WatchedStock,
+    onClick: () -> Unit,
     onDelete: () -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),

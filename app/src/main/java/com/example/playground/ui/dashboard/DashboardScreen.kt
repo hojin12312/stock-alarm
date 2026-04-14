@@ -1,5 +1,6 @@
 package com.example.playground.ui.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import java.util.Locale
 fun DashboardScreen(
     viewModel: DashboardViewModel,
     contentPadding: PaddingValues,
+    onStockClick: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val filtered = state.filtered
@@ -144,7 +146,7 @@ fun DashboardScreen(
                 }
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(filtered, key = { it.symbol }) { stock ->
-                        DashboardCard(stock)
+                        DashboardCard(stock, onClick = { onStockClick(stock.symbol) })
                     }
                 }
             }
@@ -153,9 +155,11 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun DashboardCard(stock: WatchedStock) {
+private fun DashboardCard(stock: WatchedStock, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
