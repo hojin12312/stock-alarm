@@ -26,6 +26,8 @@ import com.example.playground.ui.dashboard.DashboardScreen
 import com.example.playground.ui.dashboard.DashboardViewModel
 import com.example.playground.ui.search.SearchScreen
 import com.example.playground.ui.search.SearchViewModel
+import com.example.playground.ui.settings.SettingsScreen
+import com.example.playground.ui.settings.SettingsViewModel
 import com.example.playground.ui.watchlist.WatchlistScreen
 import com.example.playground.ui.watchlist.WatchlistViewModel
 
@@ -105,6 +107,12 @@ fun PlaygroundApp() {
                                 navController.navigate(NavRoutes.chartFor(symbol))
                             },
                         )
+                    }
+                    composable(Destination.Settings.route) {
+                        val vm: SettingsViewModel = viewModel(
+                            factory = SettingsViewModel.Factory(context),
+                        )
+                        SettingsScreen(viewModel = vm, contentPadding = innerPadding)
                     }
                     composable(
                         route = NavRoutes.CHART_PATTERN,

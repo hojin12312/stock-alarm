@@ -18,12 +18,13 @@
 | 버전 | versionCode | 주요 내용 |
 |---|---|---|
 | `v0.1.0` | 1 | 초기: 검색·관심목록·대시보드·알림 |
-| `v0.2.0` | **2** | 차트 디테일 + 앱 아이콘 + versionCode 관리 |
+| `v0.2.0` | 2 | 차트 디테일 + 앱 아이콘 + versionCode 관리 |
+| `v0.3.0` | **3** | 데이터 소스 선택(Yahoo / KIS) + Settings 탭 + 키 암호화 저장 + 네트워크 하드닝 |
 
 버전 값은 `app/build.gradle.kts`의 `defaultConfig`:
 ```kotlin
-versionCode = 2
-versionName = "0.2.0"
+versionCode = 3
+versionName = "0.3.0"
 ```
 
 ## 릴리스 절차 (새 버전 올릴 때)

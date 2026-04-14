@@ -120,6 +120,33 @@ adb logcat *:W com.example.playground:V
 12. 런처 드로어에서 **주식 알리미** 앱이 녹색 차트 + 원화 동전 아이콘으로 표시 ✅
 13. 아이콘 추가 포함 `./gradlew installDebug`(= `adb install -r`) 후 기존 Samsung Electronics/Biologics 2개 관심목록 엔트리 **그대로 유지됨** ✅ (데이터 유지 업데이트 원리 검증)
 
+## 2026-04-14 v0.3.0 검증 완료 시나리오
+
+v0.2.0 통과분 + 데이터 소스 선택/보안 추가분. 에뮬레이터(`pixel_api34`)에서 아래 통과:
+
+### 빌드 & 회귀
+1. `./gradlew assembleDebug` → BUILD SUCCESSFUL, KSP Room 컴파일 정상 ✅
+2. `./gradlew installDebug` → `adb install -r`, 기존 v0.2.0 DB(Samsung Electronics/Biologics 2개 관심목록) **그대로 유지** ✅
+3. 앱 콜드 스타트 → 4탭 하단 네비게이션(검색/관심목록/대시보드/**설정**) 정상 렌더 ✅
+
+### Settings 탭 + KIS UI
+4. 하단 "설정" 탭 탭 → `SettingsScreen` 진입, "데이터 소스" 섹션에 Yahoo Finance(기본) / 한국투자증권(KIS) 라디오 표시 ✅
+5. KIS 라디오 탭 → 확장 카드 표시: "KIS 인증 정보" 헤더 + 저장 상태("저장된 키 없음") + AppKey/AppSecret password 입력란 + [저장 & 테스트] 버튼 + 하단 스낵바 "AppKey/Secret을 입력한 뒤 저장해줘" ✅
+6. 다시 Yahoo 라디오 탭 → 확장 카드 사라지고 기본 모드로 복귀 ✅
+
+### 회귀 (Yahoo 경로 유지)
+7. 검색 탭 → "AAPL" 입력 → Yahoo `v1/finance/search` 응답에서 Apple Inc./IncomeShares Apple/Apple Inc. 3건 파싱 ✅
+8. 대시보드 탭 → 기존 Samsung Electronics/Biologics 카드 + 매수/매도 배지 정상 표시 (DB 보존 증명) ✅
+
+### 보안
+9. `adb logcat | grep -Ei "appkey|appsecret|authorization"` → 앱 로그에 평문 노출 없음(keystore2 시스템 로그만) ✅
+10. `AndroidManifest.xml` 빌드 산출물 검사: `allowBackup=false`, `usesCleartextTraffic=false`, `networkSecurityConfig=@xml/network_security_config`, `dataExtractionRules=@xml/data_extraction_rules` ✅
+
+### 미검증 (실제 KIS 키 필요)
+- KIS `/oauth2/tokenP` 실제 발급 성공 → `[저장 & 테스트]` 성공 토스트
+- KIS 국내/해외 일봉 호출로 실제 관심목록 스냅샷 갱신
+- 위 둘은 루루가 AppKey/Secret 준비한 뒤 Settings에서 "저장 & 테스트" → 대시보드 새로고침으로 확인
+
 ## 스크린샷 보관 위치
 
 검증 시 캡처한 대표 화면은 `docs/01-search.png`, `docs/03-watchlist.png`, `docs/04-dashboard.png`, `docs/05-chart.png`, `docs/06-notification.png` 등. README에도 그대로 embed됨.

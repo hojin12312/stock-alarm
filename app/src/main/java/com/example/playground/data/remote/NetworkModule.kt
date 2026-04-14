@@ -31,6 +31,9 @@ object NetworkModule {
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BASIC
+        redactHeader("Authorization")
+        redactHeader("appkey")
+        redactHeader("appsecret")
     }
 
     private val okHttp: OkHttpClient = OkHttpClient.Builder()
