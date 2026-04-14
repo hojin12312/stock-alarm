@@ -7,6 +7,8 @@
     <application
         android:name=".PlaygroundApp"
         android:label="주식 알리미"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
             android:name=".MainActivity"
