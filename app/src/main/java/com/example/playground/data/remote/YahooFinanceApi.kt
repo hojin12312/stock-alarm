@@ -10,7 +10,7 @@ import retrofit2.http.Url
 interface YahooFinanceApi {
     @GET
     suspend fun search(
-        @Url url: String = "https://query2.finance.yahoo.com/v1/finance/search",
+        @Url url: String,
         @Query("q") q: String,
         @Query("quotesCount") quotesCount: Int = 10,
         @Query("newsCount") newsCount: Int = 0,

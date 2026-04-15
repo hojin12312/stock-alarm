@@ -1,5 +1,6 @@
 package com.example.playground.data.source
 
+import android.util.Log
 import com.example.playground.data.model.ChartData
 import com.example.playground.data.model.Market
 import com.example.playground.data.model.StockSearchResult
@@ -14,7 +15,7 @@ class YahooFinanceDataSource(
 
     suspend fun search(query: String): List<StockSearchResult> {
         if (query.isBlank()) return emptyList()
-        val res = api.search(q = query)
+        val res = searchWithFallback(query)
         return res.quotes.mapNotNull { dto ->
             val symbol = dto.symbol ?: return@mapNotNull null
             val type = dto.quoteType?.uppercase()
@@ -26,6 +27,19 @@ class YahooFinanceDataSource(
                 market = resolveMarket(symbol),
             )
         }
+    }
+
+    private suspend fun searchWithFallback(query: String): com.example.playground.data.remote.dto.SearchResponseDto {
+        var lastError: Throwable? = null
+        for (host in SEARCH_HOSTS) {
+            try {
+                return api.search(url = "https://$host/v1/finance/search", q = query)
+            } catch (t: Throwable) {
+                Log.w(TAG, "search via $host failed: ${t.message}")
+                lastError = t
+            }
+        }
+        throw lastError ?: IllegalStateException("검색 실패 (호스트 목록 비어 있음)")
     }
 
     override suspend fun fetchCloses(
@@ -71,5 +85,13 @@ class YahooFinanceDataSource(
             "KS", "KQ" -> Market.KR
             else -> Market.US
         }
+    }
+
+    companion object {
+        private const val TAG = "YahooFinanceDS"
+        private val SEARCH_HOSTS = listOf(
+            "query1.finance.yahoo.com",
+            "query2.finance.yahoo.com",
+        )
     }
 }

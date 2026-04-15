@@ -5,9 +5,9 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 **현재 들어 있는 앱**: 주식 알리미 (Stock Alarm) — 한·미 주식 검색 + 관심목록 + 5/20MA 교차 알림 + 차트 디테일.
 
-## 현재 상태 (2026-04-14 기준)
+## 현재 상태 (2026-04-15 기준)
 
-- **버전**: `v0.3.0` (versionCode 3)
+- **버전**: `v0.3.1` (versionCode 4)
 - **GitHub**: https://github.com/hojin12312/stock-alarm (public)
 - **최신 APK**: `dist/stock-alarm-debug.apk` — raw URL로 배포 중
 - **앱 아이콘**: 녹색 차트 + 원화 동전 (5 해상도 legacy + Adaptive Icon v26)
@@ -15,7 +15,8 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
   - 검색은 항상 Yahoo 고정(증권사 API는 종목 검색 미제공)
   - 시세·차트·15분 워커만 활성 소스 경유
   - KIS AppKey/Secret은 `EncryptedSharedPreferences`로 암호화 저장, 토큰 원문은 메모리 전용
-- **마지막 검증**: Settings 탭 전환/KIS 카드 확장/Yahoo 회귀(AAPL 검색)/기존 관심목록 유지 통과 (2026-04-14)
+- **마지막 검증**: 신규 설치 후 samsung/tesla 검색 정상, query1으로 200 OK 확인 (2026-04-15)
+- **v0.3.1 핫픽스**: 검색 엔드포인트를 `query2.finance.yahoo.com` → `query1`로 변경. query2가 모든 검색 요청에 429 반환하던 이슈 해결.
 - **루루 최종 확정 사항**:
   - 매수/매도 라벨은 `5MA<20MA=매수` (문서 정의 그대로)
   - WorkManager 15분 주기, 장 시각 게이팅은 도입 안 함 (리소스 영향 미미)
