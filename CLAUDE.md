@@ -17,6 +17,7 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
   - KIS AppKey/Secret은 `EncryptedSharedPreferences`로 암호화 저장, 토큰 원문은 메모리 전용
 - **마지막 검증**: 신규 설치 후 samsung/tesla 검색 정상, query1으로 200 OK 확인 (2026-04-15)
 - **v0.3.1 핫픽스**: 검색 엔드포인트를 `query2.finance.yahoo.com` → `query1`로 변경. query2가 모든 검색 요청에 429 반환하던 이슈 해결.
+- **자동 업데이트**: 앱 시작 시 `dist/version.json`을 raw URL로 폴링 → 더 큰 versionCode 발견 시 다이얼로그 → DownloadManager로 APK 다운로드 → 시스템 설치 화면. 릴리스마다 `dist/version.json`도 같이 갱신해야 함 (`docs/RELEASE.md` 5단계 참고).
 - **루루 최종 확정 사항**:
   - 매수/매도 라벨은 `5MA<20MA=매수` (문서 정의 그대로)
   - WorkManager 15분 주기, 장 시각 게이팅은 도입 안 함 (리소스 영향 미미)

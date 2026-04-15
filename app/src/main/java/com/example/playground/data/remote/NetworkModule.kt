@@ -1,5 +1,6 @@
 package com.example.playground.data.remote
 
+import com.example.playground.data.update.UpdateApi
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
@@ -50,4 +51,12 @@ object NetworkModule {
         .build()
 
     val yahooApi: YahooFinanceApi = retrofit.create(YahooFinanceApi::class.java)
+
+    private val updateRetrofit: Retrofit = Retrofit.Builder()
+        .baseUrl("https://raw.githubusercontent.com/")
+        .client(okHttp)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+
+    val updateApi: UpdateApi = updateRetrofit.create(UpdateApi::class.java)
 }

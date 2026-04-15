@@ -9,6 +9,7 @@
 | 경로 | 설명 |
 |---|---|
 | `dist/stock-alarm-debug.apk` | 최신 debug APK (raw URL로 바로 다운로드 가능) |
+| `dist/version.json` | 자동 업데이트 메타 (앱이 시작 시 raw URL로 폴링) |
 | `docs/app-icon.png` | 아이콘 원본 (1024x1024) |
 | `docs/01-search.png … 06-notification.png` | 스크린샷 |
 | `README.md` | 사용자용 설치·업데이트 가이드 |
@@ -19,12 +20,13 @@
 |---|---|---|
 | `v0.1.0` | 1 | 초기: 검색·관심목록·대시보드·알림 |
 | `v0.2.0` | 2 | 차트 디테일 + 앱 아이콘 + versionCode 관리 |
-| `v0.3.0` | **3** | 데이터 소스 선택(Yahoo / KIS) + Settings 탭 + 키 암호화 저장 + 네트워크 하드닝 |
+| `v0.3.0` | 3 | 데이터 소스 선택(Yahoo / KIS) + Settings 탭 + 키 암호화 저장 + 네트워크 하드닝 |
+| `v0.3.1` | **4** | 검색 query1 핫픽스 + 자동 업데이트 (앱 시작 시 dist/version.json 폴링) |
 
 버전 값은 `app/build.gradle.kts`의 `defaultConfig`:
 ```kotlin
-versionCode = 3
-versionName = "0.3.0"
+versionCode = 4
+versionName = "0.3.1"
 ```
 
 ## 릴리스 절차 (새 버전 올릴 때)
@@ -33,17 +35,21 @@ versionName = "0.3.0"
 2. **versionName 갱신** — semver 느낌으로 `0.2.0 → 0.3.0` 등.
 3. **빌드 + 검증** — `./gradlew installDebug` → 에뮬레이터에서 주요 플로우 screencap.
 4. **APK 복사** — `cp app/build/outputs/apk/debug/app-debug.apk dist/stock-alarm-debug.apk`
-5. **README / docs 업데이트** — 새 기능 반영, 스크린샷 교체.
-6. **커밋 + 푸시** — 커밋 메시지에 버전 명시.
+5. **`dist/version.json` 갱신** — `versionCode`, `versionName`, `notes`를 새 릴리스 값으로. **APK와 같은 커밋**으로 묶어야 raw URL 캐시 미스매치를 피한다.
+6. **README / docs 업데이트** — 새 기능 반영, 스크린샷 교체.
+7. **커밋 + 푸시** — 커밋 메시지에 버전 명시.
 
 ```bash
 cd ~/home_apps/android-playground
 ./gradlew installDebug
 cp app/build/outputs/apk/debug/app-debug.apk dist/stock-alarm-debug.apk
+# dist/version.json 손으로 수정 (versionCode, versionName, notes)
 git add -A
-git commit -m "v0.3.0: <changes>"
+git commit -m "v0.4.0: <changes>"
 git push
 ```
+
+> 자동 업데이트 흐름: 사용자가 앱을 켜면 `MainActivity`가 백그라운드로 `dist/version.json`을 raw URL로 가져와 `BuildConfig.VERSION_CODE`와 비교 → 더 큰 값이면 다이얼로그 → DownloadManager로 APK 다운로드 → 시스템 설치 화면. 사용자가 "설치" 한 번 더 탭해야 함 (Android 보안상 완전 무인 설치는 불가).
 
 ## ⭐ 관심목록을 유지하면서 업데이트하기
 

@@ -13,6 +13,8 @@ import com.example.playground.data.source.kis.KisCredentialStore
 import com.example.playground.data.source.kis.KisDataSource
 import com.example.playground.data.source.kis.KisNetworkModule
 import com.example.playground.data.source.kis.KisTokenStore
+import com.example.playground.data.update.UpdateChecker
+import com.example.playground.data.update.UpdateInstaller
 import com.example.playground.notification.Notifier
 
 object ServiceLocator {
@@ -24,6 +26,8 @@ object ServiceLocator {
     @Volatile private var kisCredentialStore: KisCredentialStore? = null
     @Volatile private var kisTokenStore: KisTokenStore? = null
     @Volatile private var kisSource: KisDataSource? = null
+    @Volatile private var updateChecker: UpdateChecker? = null
+    @Volatile private var updateInstaller: UpdateInstaller? = null
 
     fun provideDatabase(context: Context): AppDatabase =
         database ?: synchronized(this) {
@@ -78,6 +82,17 @@ object ServiceLocator {
             DataSourceId.YAHOO -> provideYahooDataSource()
         }
     }
+
+    fun provideUpdateChecker(): UpdateChecker =
+        updateChecker ?: synchronized(this) {
+            updateChecker ?: UpdateChecker(NetworkModule.updateApi).also { updateChecker = it }
+        }
+
+    fun provideUpdateInstaller(context: Context): UpdateInstaller =
+        updateInstaller ?: synchronized(this) {
+            updateInstaller ?: UpdateInstaller(context.applicationContext)
+                .also { updateInstaller = it }
+        }
 
     fun provideRepository(context: Context): StockRepository =
         repository ?: synchronized(this) {
