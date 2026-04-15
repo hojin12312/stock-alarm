@@ -1,6 +1,6 @@
 {
-  "versionCode": 99,
-  "versionName": "9.9.9-test",
+  "versionCode": 4,
+  "versionName": "0.3.1",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "자동 업데이트 다이얼로그 시뮬레이션용 임시 버전"
+  "notes": "v0.3.1 — 검색 query1 핫픽스, KIS 폴백 체인, 자동 업데이트 도입"
 }
