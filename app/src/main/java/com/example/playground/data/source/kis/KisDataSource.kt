@@ -22,7 +22,7 @@ class KisDataSource(
         market: Market,
         exchangeHint: String?,
     ): List<Double> {
-        return fetchRaw(symbol, market, exchangeHint).map { it.second }
+        return fetchRaw(symbol, market, exchangeHint, range = "1y").map { it.second }
     }
 
     override suspend fun fetchChart(

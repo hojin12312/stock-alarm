@@ -11,6 +11,8 @@ import com.example.playground.data.source.StockDataSource
 import com.example.playground.data.source.YahooFinanceDataSource
 import com.example.playground.domain.MaCalculator
 import com.example.playground.domain.MaSnapshot
+import com.example.playground.domain.QuantCalculator
+import com.example.playground.domain.QuantSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
@@ -89,10 +91,6 @@ class StockRepository(
         )
     }.onFailure { Log.w(TAG, "fetchChart($symbol) failed", it) }
 
-    /**
-     * 최신 종가로 이평선 계산 후 DB 업데이트. 교차 발생 여부를 반환한다.
-     * @return Pair(이전 상태, 새 상태) — 이전 상태가 null이면 최초 계산(알림 없음)
-     */
     suspend fun refreshSnapshot(symbol: String): RefreshOutcome = runCatching {
         val entity = dao.getAll().firstOrNull { it.symbol == symbol }
             ?: return@runCatching RefreshOutcome.Skipped("not in watchlist")
@@ -101,24 +99,31 @@ class StockRepository(
             market = entity.market,
             exchangeHint = entity.exchange,
         )
-        val snapshot = MaCalculator.compute(closes)
+        val maSnapshot = MaCalculator.compute(closes)
             ?: return@runCatching RefreshOutcome.Skipped("insufficient data")
+        val quantSnapshot = QuantCalculator.compute(closes)
         val close = closes.last()
         dao.updateSnapshot(
             symbol = symbol,
-            ma5 = snapshot.ma5,
-            ma20 = snapshot.ma20,
-            status = snapshot.status,
+            ma5 = maSnapshot.ma5,
+            ma20 = maSnapshot.ma20,
+            status = maSnapshot.status,
             close = close,
             updatedAt = System.currentTimeMillis(),
+            quantStatus = quantSnapshot?.status,
+            rsi2 = quantSnapshot?.rsi2,
+            sma200 = quantSnapshot?.sma200,
         )
         RefreshOutcome.Updated(
             symbol = entity.symbol,
             name = entity.name,
             prev = entity.lastStatus,
-            current = snapshot.status,
-            snapshot = snapshot,
+            current = maSnapshot.status,
+            snapshot = maSnapshot,
             close = close,
+            prevQuant = entity.lastQuantStatus,
+            currentQuant = quantSnapshot?.status,
+            quantSnapshot = quantSnapshot,
         )
     }.getOrElse {
         Log.w(TAG, "refreshSnapshot($symbol) failed", it)
@@ -141,8 +146,12 @@ class StockRepository(
             val current: MaStatus,
             val snapshot: MaSnapshot,
             val close: Double,
+            val prevQuant: MaStatus? = null,
+            val currentQuant: MaStatus? = null,
+            val quantSnapshot: QuantSnapshot? = null,
         ) : RefreshOutcome {
             val crossed: Boolean get() = prev != null && prev != current
+            val quantCrossed: Boolean get() = prevQuant != null && currentQuant != null && prevQuant != currentQuant
         }
 
         data class Skipped(val reason: String) : RefreshOutcome

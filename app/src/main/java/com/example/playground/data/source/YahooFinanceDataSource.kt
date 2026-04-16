@@ -47,7 +47,7 @@ class YahooFinanceDataSource(
         market: Market,
         exchangeHint: String?,
     ): List<Double> {
-        val res = api.chart(symbol = symbol)
+        val res = api.chart(symbol = symbol, range = "1y")
         val result = res.chart.result?.firstOrNull() ?: return emptyList()
         val raw = result.indicators?.quote?.firstOrNull()?.close ?: return emptyList()
         return raw.filterNotNull()

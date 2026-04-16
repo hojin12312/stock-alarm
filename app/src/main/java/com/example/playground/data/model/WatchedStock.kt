@@ -11,4 +11,7 @@ data class WatchedStock(
     val lastClose: Double?,
     val lastUpdatedAt: Long?,
     val addedAt: Long,
+    val lastQuantStatus: MaStatus? = null,
+    val lastRsi2: Double? = null,
+    val lastSma200: Double? = null,
 )

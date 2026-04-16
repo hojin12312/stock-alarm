@@ -18,6 +18,9 @@ data class WatchlistEntity(
     val lastClose: Double?,
     val lastUpdatedAt: Long?,
     val addedAt: Long,
+    val lastQuantStatus: MaStatus? = null,
+    val lastRsi2: Double? = null,
+    val lastSma200: Double? = null,
 ) {
     fun toDomain(): WatchedStock = WatchedStock(
         symbol = symbol,
@@ -30,5 +33,8 @@ data class WatchlistEntity(
         lastClose = lastClose,
         lastUpdatedAt = lastUpdatedAt,
         addedAt = addedAt,
+        lastQuantStatus = lastQuantStatus,
+        lastRsi2 = lastRsi2,
+        lastSma200 = lastSma200,
     )
 }

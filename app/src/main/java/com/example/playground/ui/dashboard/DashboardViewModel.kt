@@ -3,6 +3,7 @@ package com.example.playground.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.playground.data.model.AlgorithmType
 import com.example.playground.data.model.MaStatus
 import com.example.playground.data.model.Market
 import com.example.playground.data.model.WatchedStock
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 
 data class DashboardUiState(
     val items: List<WatchedStock> = emptyList(),
+    val algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
     val statusFilter: MaStatus? = null,
     val marketFilter: Market? = null,
     val textFilter: String = "",
@@ -27,7 +29,11 @@ data class DashboardUiState(
         get() {
             val text = textFilter.trim().lowercase()
             return items.filter { item ->
-                val statusOk = statusFilter == null || item.lastStatus == statusFilter
+                val itemStatus = when (algorithmType) {
+                    AlgorithmType.MA_CROSS -> item.lastStatus
+                    AlgorithmType.RSI_SMA200 -> item.lastQuantStatus
+                }
+                val statusOk = statusFilter == null || itemStatus == statusFilter
                 val marketOk = marketFilter == null || item.market == marketFilter
                 val textOk = text.isEmpty() ||
                     item.name.lowercase().contains(text) ||
@@ -49,6 +55,10 @@ class DashboardViewModel(
         repo.observeWatchlist()
             .onEach { items -> _state.value = _state.value.copy(items = items) }
             .launchIn(viewModelScope)
+    }
+
+    fun setAlgorithmType(type: AlgorithmType) {
+        _state.value = _state.value.copy(algorithmType = type, statusFilter = null)
     }
 
     fun setStatusFilter(filter: MaStatus?) {
@@ -76,6 +86,16 @@ class DashboardViewModel(
                         newStatus = update.current,
                         ma5 = update.snapshot.ma5,
                         ma20 = update.snapshot.ma20,
+                        close = update.close,
+                    )
+                }
+                if (update.quantCrossed && update.quantSnapshot != null) {
+                    notifier.notifyQuantSignal(
+                        symbol = update.symbol,
+                        name = update.name,
+                        newStatus = update.currentQuant!!,
+                        rsi2 = update.quantSnapshot.rsi2,
+                        sma200 = update.quantSnapshot.sma200,
                         close = update.close,
                     )
                 }

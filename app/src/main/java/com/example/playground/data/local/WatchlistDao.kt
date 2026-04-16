@@ -31,7 +31,10 @@ interface WatchlistDao {
             lastMa5 = :ma5,
             lastMa20 = :ma20,
             lastClose = :close,
-            lastUpdatedAt = :updatedAt
+            lastUpdatedAt = :updatedAt,
+            lastQuantStatus = :quantStatus,
+            lastRsi2 = :rsi2,
+            lastSma200 = :sma200
         WHERE symbol = :symbol
         """
     )
@@ -42,5 +45,8 @@ interface WatchlistDao {
         status: MaStatus,
         close: Double,
         updatedAt: Long,
+        quantStatus: MaStatus? = null,
+        rsi2: Double? = null,
+        sma200: Double? = null,
     )
 }

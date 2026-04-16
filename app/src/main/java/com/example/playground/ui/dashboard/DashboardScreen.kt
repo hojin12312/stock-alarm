@@ -29,6 +29,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.playground.data.model.AlgorithmType
 import com.example.playground.data.model.MaStatus
 import com.example.playground.data.model.Market
 import com.example.playground.data.model.WatchedStock
@@ -93,6 +96,13 @@ fun DashboardScreen(
                 }
             }
         }
+
+        Spacer(Modifier.height(8.dp))
+
+        AlgorithmTabs(
+            selected = state.algorithmType,
+            onSelect = viewModel::setAlgorithmType,
+        )
 
         Spacer(Modifier.height(8.dp))
 
@@ -167,7 +177,11 @@ fun DashboardScreen(
                 }
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(filtered, key = { it.symbol }) { stock ->
-                        DashboardCard(stock, onClick = { onStockClick(stock.symbol) })
+                        DashboardCard(
+                            stock = stock,
+                            algorithmType = state.algorithmType,
+                            onClick = { onStockClick(stock.symbol) },
+                        )
                     }
                 }
             }
@@ -176,7 +190,33 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun DashboardCard(stock: WatchedStock, onClick: () -> Unit) {
+private fun AlgorithmTabs(selected: AlgorithmType, onSelect: (AlgorithmType) -> Unit) {
+    val tabs = AlgorithmType.entries
+    val selectedIndex = tabs.indexOf(selected)
+    TabRow(selectedTabIndex = selectedIndex) {
+        tabs.forEach { type ->
+            Tab(
+                selected = type == selected,
+                onClick = { onSelect(type) },
+                text = {
+                    Text(
+                        when (type) {
+                            AlgorithmType.MA_CROSS -> "MA 교차"
+                            AlgorithmType.RSI_SMA200 -> "RSI 전략"
+                        }
+                    )
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardCard(
+    stock: WatchedStock,
+    algorithmType: AlgorithmType,
+    onClick: () -> Unit,
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -202,16 +242,30 @@ private fun DashboardCard(stock: WatchedStock, onClick: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                StatusBadge(stock.lastStatus)
+                val status = when (algorithmType) {
+                    AlgorithmType.MA_CROSS -> stock.lastStatus
+                    AlgorithmType.RSI_SMA200 -> stock.lastQuantStatus
+                }
+                StatusBadge(status)
             }
 
             Spacer(Modifier.height(8.dp))
 
-            val ma5 = stock.lastMa5?.let { formatNumber(it) } ?: "-"
-            val ma20 = stock.lastMa20?.let { formatNumber(it) } ?: "-"
             val close = stock.lastClose?.let { formatNumber(it) } ?: "-"
+            val detail = when (algorithmType) {
+                AlgorithmType.MA_CROSS -> {
+                    val ma5 = stock.lastMa5?.let { formatNumber(it) } ?: "-"
+                    val ma20 = stock.lastMa20?.let { formatNumber(it) } ?: "-"
+                    "5MA $ma5  ·  20MA $ma20  ·  종가 $close"
+                }
+                AlgorithmType.RSI_SMA200 -> {
+                    val rsi = stock.lastRsi2?.let { String.format(Locale.US, "%.1f", it) } ?: "-"
+                    val sma200 = stock.lastSma200?.let { formatNumber(it) } ?: "-"
+                    "RSI(2) $rsi  ·  SMA200 $sma200  ·  종가 $close"
+                }
+            }
             Text(
-                text = "5MA $ma5  ·  20MA $ma20  ·  종가 $close",
+                text = detail,
                 style = MaterialTheme.typography.bodyMedium,
             )
             if (stock.lastUpdatedAt != null) {

@@ -30,6 +30,17 @@ class MaCrossoverWorker(
                     close = update.close,
                 )
             }
+            if (update.quantCrossed && update.quantSnapshot != null) {
+                crossed++
+                notifier.notifyQuantSignal(
+                    symbol = update.symbol,
+                    name = update.name,
+                    newStatus = update.currentQuant!!,
+                    rsi2 = update.quantSnapshot.rsi2,
+                    sma200 = update.quantSnapshot.sma200,
+                    close = update.close,
+                )
+            }
         }
         Log.i(TAG, "MaCrossoverWorker done — total=${updates.size}, crossed=$crossed")
         return Result.success()
