@@ -21,12 +21,13 @@
 | `v0.1.0` | 1 | 초기: 검색·관심목록·대시보드·알림 |
 | `v0.2.0` | 2 | 차트 디테일 + 앱 아이콘 + versionCode 관리 |
 | `v0.3.0` | 3 | 데이터 소스 선택(Yahoo / KIS) + Settings 탭 + 키 암호화 저장 + 네트워크 하드닝 |
-| `v0.3.1` | **4** | 검색 query1 핫픽스 + 자동 업데이트 (앱 시작 시 dist/version.json 폴링) |
+| `v0.3.1` | 4 | 검색 query1 핫픽스 + 자동 업데이트 (앱 시작 시 dist/version.json 폴링) |
+| `v0.3.2` | **5** | 대시보드 필터 UI 개선: 매수/매도 드롭다운 + 시장별(전체/미국/한국) 탭 |
 
 버전 값은 `app/build.gradle.kts`의 `defaultConfig`:
 ```kotlin
-versionCode = 4
-versionName = "0.3.1"
+versionCode = 5
+versionName = "0.3.2"
 ```
 
 ## 릴리스 절차 (새 버전 올릴 때)
