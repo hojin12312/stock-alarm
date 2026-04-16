@@ -1,6 +1,6 @@
 {
-  "versionCode": 12,
-  "versionName": "0.4.3",
+  "versionCode": 13,
+  "versionName": "0.4.4",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.4.3 — RSI 탭 차트 초기 range 1y 자동 설정 (대기 버그 수정)"
+  "notes": "v0.4.4 — 알고리즘 체크리스트 필터 + 교집합 모드 (MA+RSI 동시 신호)"
 }

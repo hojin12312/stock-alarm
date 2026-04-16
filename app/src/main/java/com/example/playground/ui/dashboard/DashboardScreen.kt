@@ -29,8 +29,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -99,9 +97,9 @@ fun DashboardScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        AlgorithmTabs(
-            selected = state.algorithmType,
-            onSelect = viewModel::setAlgorithmType,
+        AlgorithmChecklist(
+            selected = state.selectedAlgorithms,
+            onToggle = viewModel::toggleAlgorithm,
         )
 
         Spacer(Modifier.height(8.dp))
@@ -179,8 +177,8 @@ fun DashboardScreen(
                     items(filtered, key = { it.symbol }) { stock ->
                         DashboardCard(
                             stock = stock,
-                            algorithmType = state.algorithmType,
-                            onClick = { onStockClick(stock.symbol, state.algorithmType) },
+                            selectedAlgorithms = state.selectedAlgorithms,
+                            onClick = { onStockClick(stock.symbol, state.chartAlgorithmType) },
                         )
                     }
                 }
@@ -190,31 +188,28 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun AlgorithmTabs(selected: AlgorithmType, onSelect: (AlgorithmType) -> Unit) {
-    val tabs = AlgorithmType.entries
-    val selectedIndex = tabs.indexOf(selected)
-    TabRow(selectedTabIndex = selectedIndex) {
-        tabs.forEach { type ->
-            Tab(
-                selected = type == selected,
-                onClick = { onSelect(type) },
-                text = {
-                    Text(
-                        when (type) {
-                            AlgorithmType.MA_CROSS -> "MA 교차"
-                            AlgorithmType.RSI_SMA200 -> "RSI 전략"
-                        }
-                    )
-                },
-            )
-        }
+private fun AlgorithmChecklist(
+    selected: Set<AlgorithmType>,
+    onToggle: (AlgorithmType) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(
+            selected = AlgorithmType.MA_CROSS in selected,
+            onClick = { onToggle(AlgorithmType.MA_CROSS) },
+            label = { Text("MA 교차") },
+        )
+        FilterChip(
+            selected = AlgorithmType.RSI_SMA200 in selected,
+            onClick = { onToggle(AlgorithmType.RSI_SMA200) },
+            label = { Text("RSI 전략") },
+        )
     }
 }
 
 @Composable
 private fun DashboardCard(
     stock: WatchedStock,
-    algorithmType: AlgorithmType,
+    selectedAlgorithms: Set<AlgorithmType>,
     onClick: () -> Unit,
 ) {
     Card(
@@ -242,9 +237,10 @@ private fun DashboardCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                val status = when (algorithmType) {
-                    AlgorithmType.MA_CROSS -> stock.lastStatus
-                    AlgorithmType.RSI_SMA200 -> stock.lastQuantStatus
+                val status = when {
+                    selectedAlgorithms.size == 1 && AlgorithmType.MA_CROSS in selectedAlgorithms -> stock.lastStatus
+                    selectedAlgorithms.size == 1 -> stock.lastQuantStatus
+                    else -> stock.lastStatus
                 }
                 StatusBadge(status)
             }
@@ -252,22 +248,20 @@ private fun DashboardCard(
             Spacer(Modifier.height(8.dp))
 
             val close = stock.lastClose?.let { formatNumber(it) } ?: "-"
-            val detail = when (algorithmType) {
-                AlgorithmType.MA_CROSS -> {
-                    val ma5 = stock.lastMa5?.let { formatNumber(it) } ?: "-"
-                    val ma20 = stock.lastMa20?.let { formatNumber(it) } ?: "-"
-                    "5MA $ma5  ·  20MA $ma20  ·  종가 $close"
-                }
-                AlgorithmType.RSI_SMA200 -> {
-                    val rsi = stock.lastRsi2?.let { String.format(Locale.US, "%.1f", it) } ?: "-"
-                    val sma200 = stock.lastSma200?.let { formatNumber(it) } ?: "-"
-                    "RSI(2) $rsi  ·  SMA200 $sma200  ·  종가 $close"
+            val ma5 = stock.lastMa5?.let { formatNumber(it) } ?: "-"
+            val ma20 = stock.lastMa20?.let { formatNumber(it) } ?: "-"
+            val rsi = stock.lastRsi2?.let { String.format(Locale.US, "%.1f", it) } ?: "-"
+            val sma200 = stock.lastSma200?.let { formatNumber(it) } ?: "-"
+            when {
+                selectedAlgorithms.size == 1 && AlgorithmType.MA_CROSS in selectedAlgorithms ->
+                    Text("5MA $ma5  ·  20MA $ma20  ·  종가 $close", style = MaterialTheme.typography.bodyMedium)
+                selectedAlgorithms.size == 1 ->
+                    Text("RSI(2) $rsi  ·  SMA200 $sma200  ·  종가 $close", style = MaterialTheme.typography.bodyMedium)
+                else -> {
+                    Text("5MA $ma5  ·  20MA $ma20", style = MaterialTheme.typography.bodyMedium)
+                    Text("RSI(2) $rsi  ·  SMA200 $sma200  ·  종가 $close", style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            Text(
-                text = detail,
-                style = MaterialTheme.typography.bodyMedium,
-            )
             if (stock.lastUpdatedAt != null) {
                 Text(
                     text = "업데이트 ${formatTime(stock.lastUpdatedAt)}",

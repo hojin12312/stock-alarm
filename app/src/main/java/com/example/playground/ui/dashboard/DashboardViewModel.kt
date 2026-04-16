@@ -18,27 +18,40 @@ import kotlinx.coroutines.launch
 
 data class DashboardUiState(
     val items: List<WatchedStock> = emptyList(),
-    val algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
+    val selectedAlgorithms: Set<AlgorithmType> = setOf(AlgorithmType.MA_CROSS),
     val statusFilter: MaStatus? = null,
     val marketFilter: Market? = null,
     val textFilter: String = "",
     val refreshing: Boolean = false,
     val lastRunAt: Long? = null,
 ) {
+    val chartAlgorithmType: AlgorithmType
+        get() = if (selectedAlgorithms.size == 1) selectedAlgorithms.first() else AlgorithmType.MA_CROSS
+
     val filtered: List<WatchedStock>
         get() {
             val text = textFilter.trim().lowercase()
             return items.filter { item ->
-                val itemStatus = when (algorithmType) {
-                    AlgorithmType.MA_CROSS -> item.lastStatus
-                    AlgorithmType.RSI_SMA200 -> item.lastQuantStatus
+                val passesAlgo = when (selectedAlgorithms.size) {
+                    1 -> {
+                        val status = when (selectedAlgorithms.first()) {
+                            AlgorithmType.MA_CROSS -> item.lastStatus
+                            AlgorithmType.RSI_SMA200 -> item.lastQuantStatus
+                        }
+                        statusFilter == null || status == statusFilter
+                    }
+                    else -> {
+                        val ma = item.lastStatus
+                        val rsi = item.lastQuantStatus
+                        ma != null && rsi != null && ma == rsi &&
+                            (statusFilter == null || ma == statusFilter)
+                    }
                 }
-                val statusOk = statusFilter == null || itemStatus == statusFilter
                 val marketOk = marketFilter == null || item.market == marketFilter
                 val textOk = text.isEmpty() ||
                     item.name.lowercase().contains(text) ||
                     item.symbol.lowercase().contains(text)
-                statusOk && marketOk && textOk
+                passesAlgo && marketOk && textOk
             }
         }
 }
@@ -57,8 +70,11 @@ class DashboardViewModel(
             .launchIn(viewModelScope)
     }
 
-    fun setAlgorithmType(type: AlgorithmType) {
-        _state.value = _state.value.copy(algorithmType = type, statusFilter = null)
+    fun toggleAlgorithm(type: AlgorithmType) {
+        val current = _state.value.selectedAlgorithms
+        val new = if (type in current) current - type else current + type
+        if (new.isEmpty()) return
+        _state.value = _state.value.copy(selectedAlgorithms = new, statusFilter = null)
     }
 
     fun setStatusFilter(filter: MaStatus?) {
