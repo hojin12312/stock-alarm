@@ -59,7 +59,7 @@ fun SearchScreen(
                 onValueChange = viewModel::onQueryChange,
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                placeholder = { Text("예: 삼성, AAPL, Tesla") },
+                placeholder = { Text("예: Samsung, AAPL, Tesla") },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { viewModel.onSubmitSearch() }),
             )

@@ -103,27 +103,27 @@ fun DashboardScreen(
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
-                    selected = state.marketFilter == null,
-                    onClick = { viewModel.setMarketFilter(null) },
+                    selected = state.statusFilter == null,
+                    onClick = { viewModel.setStatusFilter(null) },
                     label = { Text("전체") },
                 )
                 FilterChip(
-                    selected = state.marketFilter == Market.US,
-                    onClick = { viewModel.setMarketFilter(Market.US) },
-                    label = { Text("미국") },
+                    selected = state.statusFilter == MaStatus.BUY,
+                    onClick = { viewModel.setStatusFilter(MaStatus.BUY) },
+                    label = { Text("매수") },
                 )
                 FilterChip(
-                    selected = state.marketFilter == Market.KR,
-                    onClick = { viewModel.setMarketFilter(Market.KR) },
-                    label = { Text("한국") },
+                    selected = state.statusFilter == MaStatus.SELL,
+                    onClick = { viewModel.setStatusFilter(MaStatus.SELL) },
+                    label = { Text("매도") },
                 )
             }
 
             Spacer(Modifier.weight(1f))
 
-            StatusDropdown(
-                selected = state.statusFilter,
-                onSelect = viewModel::setStatusFilter,
+            MarketDropdown(
+                selected = state.marketFilter,
+                onSelect = viewModel::setMarketFilter,
             )
         }
 
@@ -226,12 +226,12 @@ private fun DashboardCard(stock: WatchedStock, onClick: () -> Unit) {
 }
 
 @Composable
-private fun StatusDropdown(selected: MaStatus?, onSelect: (MaStatus?) -> Unit) {
+private fun MarketDropdown(selected: Market?, onSelect: (Market?) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val label = when (selected) {
         null -> "전체"
-        MaStatus.BUY -> "매수"
-        MaStatus.SELL -> "매도"
+        Market.US -> "미국"
+        Market.KR -> "한국"
     }
     Box {
         OutlinedButton(onClick = { expanded = true }) {
@@ -247,12 +247,12 @@ private fun StatusDropdown(selected: MaStatus?, onSelect: (MaStatus?) -> Unit) {
                 onClick = { onSelect(null); expanded = false },
             )
             DropdownMenuItem(
-                text = { Text("매수") },
-                onClick = { onSelect(MaStatus.BUY); expanded = false },
+                text = { Text("미국") },
+                onClick = { onSelect(Market.US); expanded = false },
             )
             DropdownMenuItem(
-                text = { Text("매도") },
-                onClick = { onSelect(MaStatus.SELL); expanded = false },
+                text = { Text("한국") },
+                onClick = { onSelect(Market.KR); expanded = false },
             )
         }
     }

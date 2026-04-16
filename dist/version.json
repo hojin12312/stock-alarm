@@ -1,6 +1,6 @@
 {
-  "versionCode": 6,
-  "versionName": "0.3.3",
+  "versionCode": 7,
+  "versionName": "0.3.4",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.3.3 — 설정에 수동 업데이트 확인 버튼 추가"
+  "notes": "v0.3.4 — 대시보드 필터 배치 교체 + 검색 placeholder 수정"
 }
