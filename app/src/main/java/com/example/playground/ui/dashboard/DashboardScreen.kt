@@ -14,26 +14,34 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.playground.data.model.MaStatus
+import com.example.playground.data.model.Market
 import com.example.playground.data.model.WatchedStock
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -88,21 +96,34 @@ fun DashboardScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(
-                selected = state.statusFilter == null,
-                onClick = { viewModel.setStatusFilter(null) },
-                label = { Text("전체") },
-            )
-            FilterChip(
-                selected = state.statusFilter == MaStatus.BUY,
-                onClick = { viewModel.setStatusFilter(MaStatus.BUY) },
-                label = { Text("매수") },
-            )
-            FilterChip(
-                selected = state.statusFilter == MaStatus.SELL,
-                onClick = { viewModel.setStatusFilter(MaStatus.SELL) },
-                label = { Text("매도") },
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = state.marketFilter == null,
+                    onClick = { viewModel.setMarketFilter(null) },
+                    label = { Text("전체") },
+                )
+                FilterChip(
+                    selected = state.marketFilter == Market.US,
+                    onClick = { viewModel.setMarketFilter(Market.US) },
+                    label = { Text("미국") },
+                )
+                FilterChip(
+                    selected = state.marketFilter == Market.KR,
+                    onClick = { viewModel.setMarketFilter(Market.KR) },
+                    label = { Text("한국") },
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            StatusDropdown(
+                selected = state.statusFilter,
+                onSelect = viewModel::setStatusFilter,
             )
         }
 
@@ -200,6 +221,39 @@ private fun DashboardCard(stock: WatchedStock, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun StatusDropdown(selected: MaStatus?, onSelect: (MaStatus?) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = when (selected) {
+        null -> "전체"
+        MaStatus.BUY -> "매수"
+        MaStatus.SELL -> "매도"
+    }
+    Box {
+        OutlinedButton(onClick = { expanded = true }) {
+            Text(label)
+            Icon(
+                imageVector = Icons.Filled.ArrowDropDown,
+                contentDescription = null,
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text("전체") },
+                onClick = { onSelect(null); expanded = false },
+            )
+            DropdownMenuItem(
+                text = { Text("매수") },
+                onClick = { onSelect(MaStatus.BUY); expanded = false },
+            )
+            DropdownMenuItem(
+                text = { Text("매도") },
+                onClick = { onSelect(MaStatus.SELL); expanded = false },
+            )
         }
     }
 }

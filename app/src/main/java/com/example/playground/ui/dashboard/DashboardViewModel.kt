@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.playground.data.model.MaStatus
+import com.example.playground.data.model.Market
 import com.example.playground.data.model.WatchedStock
 import com.example.playground.data.repo.StockRepository
 import com.example.playground.notification.Notifier
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 data class DashboardUiState(
     val items: List<WatchedStock> = emptyList(),
     val statusFilter: MaStatus? = null,
+    val marketFilter: Market? = null,
     val textFilter: String = "",
     val refreshing: Boolean = false,
     val lastRunAt: Long? = null,
@@ -26,10 +28,11 @@ data class DashboardUiState(
             val text = textFilter.trim().lowercase()
             return items.filter { item ->
                 val statusOk = statusFilter == null || item.lastStatus == statusFilter
+                val marketOk = marketFilter == null || item.market == marketFilter
                 val textOk = text.isEmpty() ||
                     item.name.lowercase().contains(text) ||
                     item.symbol.lowercase().contains(text)
-                statusOk && textOk
+                statusOk && marketOk && textOk
             }
         }
 }
@@ -50,6 +53,10 @@ class DashboardViewModel(
 
     fun setStatusFilter(filter: MaStatus?) {
         _state.value = _state.value.copy(statusFilter = filter)
+    }
+
+    fun setMarketFilter(filter: Market?) {
+        _state.value = _state.value.copy(marketFilter = filter)
     }
 
     fun setTextFilter(text: String) {
