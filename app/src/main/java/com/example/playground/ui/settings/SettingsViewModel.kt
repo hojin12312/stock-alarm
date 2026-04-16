@@ -8,6 +8,7 @@ import com.example.playground.data.prefs.AppSettings
 import com.example.playground.data.source.DataSourceId
 import com.example.playground.data.source.kis.KisCredentialStore
 import com.example.playground.data.source.kis.KisDataSource
+import com.example.playground.data.update.UpdateInfo
 import com.example.playground.di.ServiceLocator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,8 @@ data class SettingsUiState(
     val busy: Boolean = false,
     val message: String? = null,
     val error: String? = null,
+    val checkingUpdate: Boolean = false,
+    val pendingUpdate: UpdateInfo? = null,
 )
 
 class SettingsViewModel(
@@ -104,6 +107,23 @@ class SettingsViewModel(
 
     fun consumeMessage() {
         _state.value = _state.value.copy(message = null, error = null)
+    }
+
+    fun checkForUpdate() {
+        if (_state.value.checkingUpdate) return
+        _state.value = _state.value.copy(checkingUpdate = true, error = null, message = null)
+        viewModelScope.launch {
+            val info = ServiceLocator.provideUpdateChecker().check()
+            _state.value = if (info != null) {
+                _state.value.copy(checkingUpdate = false, pendingUpdate = info)
+            } else {
+                _state.value.copy(checkingUpdate = false, message = "최신 버전이야! ✨")
+            }
+        }
+    }
+
+    fun dismissUpdate() {
+        _state.value = _state.value.copy(pendingUpdate = null)
     }
 
     class Factory(private val context: Context) : ViewModelProvider.Factory {

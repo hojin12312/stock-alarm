@@ -1,6 +1,6 @@
 {
-  "versionCode": 5,
-  "versionName": "0.3.2",
+  "versionCode": 6,
+  "versionName": "0.3.3",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.3.2 — 대시보드 필터 UI 개선: 매수/매도 드롭다운 + 시장별 탭"
+  "notes": "v0.3.3 — 설정에 수동 업데이트 확인 버튼 추가"
 }

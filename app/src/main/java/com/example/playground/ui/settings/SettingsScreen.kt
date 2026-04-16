@@ -30,13 +30,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.playground.BuildConfig
 import com.example.playground.data.source.DataSourceId
+import com.example.playground.di.ServiceLocator
+import com.example.playground.ui.update.UpdateDialog
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -97,6 +101,51 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
+            Text("앱 정보", style = MaterialTheme.typography.titleMedium)
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        "현재 버전: v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Button(
+                        onClick = { viewModel.checkForUpdate() },
+                        enabled = !state.checkingUpdate,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (state.checkingUpdate) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.height(16.dp),
+                                strokeWidth = 2.dp,
+                            )
+                            Spacer(Modifier.padding(horizontal = 4.dp))
+                        }
+                        Text("업데이트 확인")
+                    }
+                }
+            }
+
+            state.pendingUpdate?.let { info ->
+                val context = LocalContext.current
+                UpdateDialog(
+                    info = info,
+                    onConfirm = {
+                        ServiceLocator.provideUpdateInstaller(context).start(info)
+                        viewModel.dismissUpdate()
+                    },
+                    onDismiss = { viewModel.dismissUpdate() },
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
 
             if (state.dataSource == DataSourceId.KIS) {
                 Card(modifier = Modifier.fillMaxWidth()) {
