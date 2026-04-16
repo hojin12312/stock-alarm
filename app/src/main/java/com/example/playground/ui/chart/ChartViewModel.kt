@@ -3,6 +3,7 @@ package com.example.playground.ui.chart
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.playground.data.model.AlgorithmType
 import com.example.playground.data.model.ChartData
 import com.example.playground.data.repo.StockRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,9 +21,11 @@ data class ChartUiState(
 class ChartViewModel(
     private val repo: StockRepository,
     private val symbol: String,
+    private val algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ChartUiState(loading = true))
+    private val initialRange = if (algorithmType == AlgorithmType.RSI_SMA200) "1y" else "3mo"
+    private val _state = MutableStateFlow(ChartUiState(loading = true, range = initialRange))
     val state: StateFlow<ChartUiState> = _state.asStateFlow()
 
     init {
@@ -53,9 +56,10 @@ class ChartViewModel(
     class Factory(
         private val repo: StockRepository,
         private val symbol: String,
+        private val algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ChartViewModel(repo, symbol) as T
+            ChartViewModel(repo, symbol, algorithmType) as T
     }
 }

@@ -196,7 +196,7 @@ fun PlaygroundApp() {
                         val algo = runCatching { AlgorithmType.valueOf(algoName ?: "") }
                             .getOrDefault(AlgorithmType.MA_CROSS)
                         val vm: ChartViewModel = viewModel(
-                            factory = ChartViewModel.Factory(repo, symbol),
+                            factory = ChartViewModel.Factory(repo, symbol, algo),
                         )
                         ChartScreen(
                             viewModel = vm,
