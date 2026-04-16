@@ -52,9 +52,20 @@ object NetworkModule {
 
     val yahooApi: YahooFinanceApi = retrofit.create(YahooFinanceApi::class.java)
 
+    private val noCacheInterceptor = Interceptor { chain ->
+        val request = chain.request().newBuilder()
+            .header("Cache-Control", "no-cache, no-store")
+            .build()
+        chain.proceed(request)
+    }
+
+    private val updateOkHttp: OkHttpClient = okHttp.newBuilder()
+        .addInterceptor(noCacheInterceptor)
+        .build()
+
     private val updateRetrofit: Retrofit = Retrofit.Builder()
         .baseUrl("https://raw.githubusercontent.com/")
-        .client(okHttp)
+        .client(updateOkHttp)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
 
