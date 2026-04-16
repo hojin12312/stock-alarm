@@ -54,7 +54,7 @@ import java.util.Locale
 fun DashboardScreen(
     viewModel: DashboardViewModel,
     contentPadding: PaddingValues,
-    onStockClick: (String) -> Unit,
+    onStockClick: (String, AlgorithmType) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val filtered = state.filtered
@@ -180,7 +180,7 @@ fun DashboardScreen(
                         DashboardCard(
                             stock = stock,
                             algorithmType = state.algorithmType,
-                            onClick = { onStockClick(stock.symbol) },
+                            onClick = { onStockClick(stock.symbol, state.algorithmType) },
                         )
                     }
                 }

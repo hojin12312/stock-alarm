@@ -10,6 +10,7 @@ data class NotificationEntity(
     val name: String,
     val type: String,       // "MA" or "RSI"
     val status: String,     // "BUY" or "SELL"
+    val market: String = "", // "US" or "KR"
     val detail: String,
     val createdAt: Long,
     val read: Boolean = false,

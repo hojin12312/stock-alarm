@@ -37,6 +37,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.playground.data.model.AlgorithmType
 import com.example.playground.di.ServiceLocator
 import com.example.playground.ui.chart.ChartScreen
 import com.example.playground.ui.chart.ChartViewModel
@@ -54,9 +55,11 @@ import kotlinx.coroutines.launch
 
 object NavRoutes {
     const val CHART_PREFIX = "chart"
-    fun chartFor(symbol: String): String = "$CHART_PREFIX/$symbol"
-    const val CHART_PATTERN = "$CHART_PREFIX/{symbol}"
     const val CHART_ARG_SYMBOL = "symbol"
+    const val CHART_ARG_ALGO = "algo"
+    fun chartFor(symbol: String, algo: AlgorithmType = AlgorithmType.MA_CROSS): String =
+        "$CHART_PREFIX/$symbol?$CHART_ARG_ALGO=${algo.name}"
+    const val CHART_PATTERN = "$CHART_PREFIX/{symbol}?$CHART_ARG_ALGO={algo}"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -167,8 +170,8 @@ fun PlaygroundApp() {
                         DashboardScreen(
                             viewModel = vm,
                             contentPadding = innerPadding,
-                            onStockClick = { symbol ->
-                                navController.navigate(NavRoutes.chartFor(symbol))
+                            onStockClick = { symbol, algo ->
+                                navController.navigate(NavRoutes.chartFor(symbol, algo))
                             },
                         )
                     }
@@ -182,14 +185,22 @@ fun PlaygroundApp() {
                         route = NavRoutes.CHART_PATTERN,
                         arguments = listOf(
                             navArgument(NavRoutes.CHART_ARG_SYMBOL) { type = NavType.StringType },
+                            navArgument(NavRoutes.CHART_ARG_ALGO) {
+                                type = NavType.StringType
+                                defaultValue = AlgorithmType.MA_CROSS.name
+                            },
                         ),
                     ) { backStackEntry ->
                         val symbol = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_SYMBOL).orEmpty()
+                        val algoName = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_ALGO)
+                        val algo = runCatching { AlgorithmType.valueOf(algoName ?: "") }
+                            .getOrDefault(AlgorithmType.MA_CROSS)
                         val vm: ChartViewModel = viewModel(
                             factory = ChartViewModel.Factory(repo, symbol),
                         )
                         ChartScreen(
                             viewModel = vm,
+                            algorithmType = algo,
                             contentPadding = innerPadding,
                             onBack = { navController.popBackStack() },
                         )
@@ -198,12 +209,17 @@ fun PlaygroundApp() {
             }
 
             if (showSheet) {
+                val notificationFilter by notificationVm.filter.collectAsStateWithLifecycle()
                 ModalBottomSheet(
                     onDismissRequest = { showSheet = false },
                     sheetState = sheetState,
                 ) {
                     NotificationSheetContent(
                         items = notificationItems,
+                        filter = notificationFilter,
+                        onTypeFilter = notificationVm::setTypeFilter,
+                        onStatusFilter = notificationVm::setStatusFilter,
+                        onMarketFilter = notificationVm::setMarketFilter,
                         onDelete = { id -> notificationVm.delete(id) },
                         onDeleteAll = {
                             notificationVm.deleteAll()

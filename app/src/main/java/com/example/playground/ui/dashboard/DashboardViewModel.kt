@@ -87,6 +87,7 @@ class DashboardViewModel(
                         ma5 = update.snapshot.ma5,
                         ma20 = update.snapshot.ma20,
                         close = update.close,
+                        market = update.market.name,
                     )
                 }
                 if (update.quantCrossed && update.quantSnapshot != null) {
@@ -97,6 +98,7 @@ class DashboardViewModel(
                         rsi2 = update.quantSnapshot.rsi2,
                         sma200 = update.quantSnapshot.sma200,
                         close = update.close,
+                        market = update.market.name,
                     )
                 }
             }

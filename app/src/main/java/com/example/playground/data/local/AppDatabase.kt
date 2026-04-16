@@ -8,7 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [WatchlistEntity::class, NotificationEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -39,6 +39,12 @@ abstract class AppDatabase : RoomDatabase() {
                         read INTEGER NOT NULL DEFAULT 0
                     )"""
                 )
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE notifications ADD COLUMN market TEXT NOT NULL DEFAULT ''")
             }
         }
     }

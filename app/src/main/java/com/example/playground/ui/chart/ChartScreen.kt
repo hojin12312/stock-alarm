@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.playground.data.model.AlgorithmType
 import com.example.playground.data.model.ChartData
 import com.example.playground.data.model.MaStatus
 import java.text.SimpleDateFormat
@@ -47,6 +48,7 @@ import java.util.Locale
 @Composable
 fun ChartScreen(
     viewModel: ChartViewModel,
+    algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
     contentPadding: PaddingValues,
     onBack: () -> Unit,
 ) {
@@ -95,6 +97,7 @@ fun ChartScreen(
             state.data != null -> {
                 ChartContent(
                     data = state.data!!,
+                    algorithmType = algorithmType,
                     range = state.range,
                     onRangeSelect = viewModel::selectRange,
                 )
@@ -106,6 +109,7 @@ fun ChartScreen(
 @Composable
 private fun ChartContent(
     data: ChartData,
+    algorithmType: AlgorithmType,
     range: String,
     onRangeSelect: (String) -> Unit,
 ) {
@@ -116,8 +120,7 @@ private fun ChartContent(
     ) {
         Spacer(Modifier.height(8.dp))
 
-        // 헤더: 현재 상태 카드
-        StatusHeader(data)
+        StatusHeader(data, algorithmType)
 
         Spacer(Modifier.height(12.dp))
 
@@ -169,7 +172,7 @@ private fun ChartContent(
 }
 
 @Composable
-private fun StatusHeader(data: ChartData) {
+private fun StatusHeader(data: ChartData, algorithmType: AlgorithmType) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -193,14 +196,31 @@ private fun StatusHeader(data: ChartData) {
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Spacer(Modifier.height(4.dp))
-                val ma5 = data.lastMa5?.let { formatNumber(it) } ?: "-"
-                val ma20 = data.lastMa20?.let { formatNumber(it) } ?: "-"
-                Text(
-                    text = "5MA $ma5  ·  20MA $ma20",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                when (algorithmType) {
+                    AlgorithmType.MA_CROSS -> {
+                        val ma5 = data.lastMa5?.let { formatNumber(it) } ?: "-"
+                        val ma20 = data.lastMa20?.let { formatNumber(it) } ?: "-"
+                        Text(
+                            text = "5MA $ma5  ·  20MA $ma20",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    AlgorithmType.RSI_SMA200 -> {
+                        val quant = data.quantSnapshot
+                        val rsi = quant?.rsi2?.let { String.format(Locale.US, "%.1f", it) } ?: "-"
+                        val sma200 = quant?.sma200?.let { formatNumber(it) } ?: "-"
+                        Text(
+                            text = "RSI(2) $rsi  ·  SMA200 $sma200",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
             }
-            StatusBadge(data.status)
+            val status = when (algorithmType) {
+                AlgorithmType.MA_CROSS -> data.maStatus
+                AlgorithmType.RSI_SMA200 -> data.quantSnapshot?.status
+            }
+            StatusBadge(status)
         }
     }
 }

@@ -28,6 +28,7 @@ class Notifier(
         ma5: Double,
         ma20: Double,
         close: Double,
+        market: String = "",
     ) {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val statusLabel = if (newStatus == MaStatus.BUY) "매수 전환" else "매도 전환"
@@ -52,6 +53,7 @@ class Notifier(
                 name = name,
                 type = "MA",
                 status = if (newStatus == MaStatus.BUY) "BUY" else "SELL",
+                market = market,
                 detail = body,
                 createdAt = System.currentTimeMillis(),
             )
@@ -65,6 +67,7 @@ class Notifier(
         rsi2: Double,
         sma200: Double,
         close: Double,
+        market: String = "",
     ) {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val statusLabel = if (newStatus == MaStatus.BUY) "매수 신호" else "매도 신호"
@@ -89,6 +92,7 @@ class Notifier(
                 name = name,
                 type = "RSI",
                 status = if (newStatus == MaStatus.BUY) "BUY" else "SELL",
+                market = market,
                 detail = body,
                 createdAt = System.currentTimeMillis(),
             )

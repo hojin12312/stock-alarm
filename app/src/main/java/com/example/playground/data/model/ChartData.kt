@@ -1,5 +1,7 @@
 package com.example.playground.data.model
 
+import com.example.playground.domain.QuantCalculator
+
 data class ChartData(
     val symbol: String,
     val name: String,
@@ -11,10 +13,15 @@ data class ChartData(
     val lastClose: Double? get() = closes.lastOrNull()
     val lastMa5: Double? get() = ma5Series.lastOrNull()
     val lastMa20: Double? get() = ma20Series.lastOrNull()
-    val status: MaStatus?
+    val maStatus: MaStatus?
         get() {
             val ma5 = lastMa5 ?: return null
             val ma20 = lastMa20 ?: return null
             return if (ma5 < ma20) MaStatus.BUY else MaStatus.SELL
         }
+
+    /** 하위 호환 */
+    val status: MaStatus? get() = maStatus
+
+    val quantSnapshot by lazy { QuantCalculator.compute(closes) }
 }

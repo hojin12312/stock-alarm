@@ -1,6 +1,6 @@
 {
-  "versionCode": 10,
-  "versionName": "0.4.1",
+  "versionCode": 11,
+  "versionName": "0.4.2",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.4.1 — 앱 내 알림 센터 추가 (종 아이콘 + 스와이프 삭제 + 전체 삭제)"
+  "notes": "v0.4.2 — 알림 필터(MA/RSI, 매수/매도, 미국/한국) + RSI 탭 차트 연동 버그 수정"
 }

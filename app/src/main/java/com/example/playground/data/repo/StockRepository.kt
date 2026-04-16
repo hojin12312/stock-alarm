@@ -5,6 +5,7 @@ import com.example.playground.data.local.WatchlistDao
 import com.example.playground.data.local.WatchlistEntity
 import com.example.playground.data.model.ChartData
 import com.example.playground.data.model.MaStatus
+import com.example.playground.data.model.Market
 import com.example.playground.data.model.StockSearchResult
 import com.example.playground.data.model.WatchedStock
 import com.example.playground.data.source.StockDataSource
@@ -117,6 +118,7 @@ class StockRepository(
         RefreshOutcome.Updated(
             symbol = entity.symbol,
             name = entity.name,
+            market = entity.market,
             prev = entity.lastStatus,
             current = maSnapshot.status,
             snapshot = maSnapshot,
@@ -142,6 +144,7 @@ class StockRepository(
         data class Updated(
             val symbol: String,
             val name: String,
+            val market: Market,
             val prev: MaStatus?,
             val current: MaStatus,
             val snapshot: MaSnapshot,
