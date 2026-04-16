@@ -1,16 +1,34 @@
 package com.example.playground.ui.nav
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
@@ -24,12 +42,15 @@ import com.example.playground.ui.chart.ChartScreen
 import com.example.playground.ui.chart.ChartViewModel
 import com.example.playground.ui.dashboard.DashboardScreen
 import com.example.playground.ui.dashboard.DashboardViewModel
+import com.example.playground.ui.notification.NotificationSheetContent
+import com.example.playground.ui.notification.NotificationViewModel
 import com.example.playground.ui.search.SearchScreen
 import com.example.playground.ui.search.SearchViewModel
 import com.example.playground.ui.settings.SettingsScreen
 import com.example.playground.ui.settings.SettingsViewModel
 import com.example.playground.ui.watchlist.WatchlistScreen
 import com.example.playground.ui.watchlist.WatchlistViewModel
+import kotlinx.coroutines.launch
 
 object NavRoutes {
     const val CHART_PREFIX = "chart"
@@ -38,6 +59,7 @@ object NavRoutes {
     const val CHART_ARG_SYMBOL = "symbol"
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaygroundApp() {
     MaterialTheme {
@@ -45,10 +67,52 @@ fun PlaygroundApp() {
             val navController = rememberNavController()
             val context = LocalContext.current
             val repo = ServiceLocator.provideRepository(context)
+            val notificationDao = ServiceLocator.provideNotificationDao(context)
+
+            val notificationVm: NotificationViewModel = viewModel(
+                factory = NotificationViewModel.Factory(notificationDao),
+            )
+            val notificationItems by notificationVm.items.collectAsStateWithLifecycle()
+            val unreadCount by notificationVm.unreadCount.collectAsStateWithLifecycle()
+
+            var showSheet by remember { mutableStateOf(false) }
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            val scope = rememberCoroutineScope()
 
             val tabRoutes = Destination.values().map { it.route }.toSet()
 
             Scaffold(
+                topBar = {
+                    val backStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = backStackEntry?.destination?.hierarchy
+                        ?.firstOrNull()?.route
+                    if (currentRoute in tabRoutes) {
+                        TopAppBar(
+                            title = {},
+                            actions = {
+                                IconButton(onClick = {
+                                    showSheet = true
+                                    notificationVm.markAllRead()
+                                }) {
+                                    BadgedBox(
+                                        badge = {
+                                            if (unreadCount > 0) {
+                                                Badge(
+                                                    modifier = Modifier.size(8.dp),
+                                                )
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Notifications,
+                                            contentDescription = "알림",
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                    }
+                },
                 bottomBar = {
                     val backStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = backStackEntry?.destination?.hierarchy
@@ -130,6 +194,25 @@ fun PlaygroundApp() {
                             onBack = { navController.popBackStack() },
                         )
                     }
+                }
+            }
+
+            if (showSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showSheet = false },
+                    sheetState = sheetState,
+                ) {
+                    NotificationSheetContent(
+                        items = notificationItems,
+                        onDelete = { id -> notificationVm.delete(id) },
+                        onDeleteAll = {
+                            notificationVm.deleteAll()
+                            scope.launch {
+                                sheetState.hide()
+                                showSheet = false
+                            }
+                        },
+                    )
                 }
             }
         }

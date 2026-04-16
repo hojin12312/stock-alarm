@@ -8,15 +8,20 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.playground.MainActivity
+import com.example.playground.data.local.NotificationDao
+import com.example.playground.data.local.NotificationEntity
 import com.example.playground.data.model.MaStatus
 
-class Notifier(private val context: Context) {
+class Notifier(
+    private val context: Context,
+    private val notificationDao: NotificationDao,
+) {
 
     init {
         ensureChannels()
     }
 
-    fun notifyCrossover(
+    suspend fun notifyCrossover(
         symbol: String,
         name: String,
         newStatus: MaStatus,
@@ -40,9 +45,20 @@ class Notifier(private val context: Context) {
             .build()
 
         nm.notify(symbol.hashCode(), notification)
+
+        notificationDao.insert(
+            NotificationEntity(
+                symbol = symbol,
+                name = name,
+                type = "MA",
+                status = if (newStatus == MaStatus.BUY) "BUY" else "SELL",
+                detail = body,
+                createdAt = System.currentTimeMillis(),
+            )
+        )
     }
 
-    fun notifyQuantSignal(
+    suspend fun notifyQuantSignal(
         symbol: String,
         name: String,
         newStatus: MaStatus,
@@ -66,6 +82,17 @@ class Notifier(private val context: Context) {
             .build()
 
         nm.notify((symbol + "_quant").hashCode(), notification)
+
+        notificationDao.insert(
+            NotificationEntity(
+                symbol = symbol,
+                name = name,
+                type = "RSI",
+                status = if (newStatus == MaStatus.BUY) "BUY" else "SELL",
+                detail = body,
+                createdAt = System.currentTimeMillis(),
+            )
+        )
     }
 
     private fun launchIntent(): PendingIntent {

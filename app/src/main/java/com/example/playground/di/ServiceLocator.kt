@@ -35,13 +35,19 @@ object ServiceLocator {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "playground.db",
-            ).addMigrations(AppDatabase.MIGRATION_1_2).build().also { database = it }
+            ).addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3).build().also { database = it }
         }
 
     fun provideNotifier(context: Context): Notifier =
         notifier ?: synchronized(this) {
-            notifier ?: Notifier(context.applicationContext).also { notifier = it }
+            notifier ?: Notifier(
+                context.applicationContext,
+                provideDatabase(context).notificationDao(),
+            ).also { notifier = it }
         }
+
+    fun provideNotificationDao(context: Context) =
+        provideDatabase(context).notificationDao()
 
     fun provideAppSettings(context: Context): AppSettings =
         appSettings ?: synchronized(this) {

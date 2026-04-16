@@ -1,6 +1,6 @@
 {
-  "versionCode": 9,
-  "versionName": "0.4.0",
+  "versionCode": 10,
+  "versionName": "0.4.1",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.4.0 — RSI(2)+SMA(200) 듀얼 알고리즘 전략 추가"
+  "notes": "v0.4.1 — 앱 내 알림 센터 추가 (종 아이콘 + 스와이프 삭제 + 전체 삭제)"
 }
