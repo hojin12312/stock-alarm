@@ -11,6 +11,8 @@ import com.example.playground.MainActivity
 import com.example.playground.data.local.NotificationDao
 import com.example.playground.data.local.NotificationEntity
 import com.example.playground.data.model.MaStatus
+import com.example.playground.util.formatDecimal1
+import com.example.playground.util.formatNumber
 
 class Notifier(
     private val context: Context,
@@ -72,7 +74,7 @@ class Notifier(
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val statusLabel = if (newStatus == MaStatus.BUY) "매수 신호" else "매도 신호"
         val title = "[RSI $statusLabel] $name ($symbol)"
-        val body = "RSI(2) ${String.format(java.util.Locale.US, "%.1f", rsi2)} · SMA200 ${formatNumber(sma200)} · 종가 ${formatNumber(close)}"
+        val body = "RSI(2) ${formatDecimal1(rsi2)} · SMA200 ${formatNumber(sma200)} · 종가 ${formatNumber(close)}"
 
         val notification = NotificationCompat.Builder(context, CHANNEL_MA)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
@@ -123,10 +125,6 @@ class Notifier(
             nm.createNotificationChannel(channel)
         }
     }
-
-    private fun formatNumber(value: Double): String =
-        if (value >= 1000) String.format(java.util.Locale.US, "%,.0f", value)
-        else String.format(java.util.Locale.US, "%.2f", value)
 
     companion object {
         const val CHANNEL_MA = "ma_crossover"

@@ -5,9 +5,14 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 **현재 들어 있는 앱**: 주식 알리미 (Stock Alarm) — 한·미 주식 검색 + 관심목록 + 5/20MA 교차 알림 + 차트 디테일.
 
-## 현재 상태 (2026-04-16 기준)
+## 현재 상태 (2026-04-20 기준)
 
-- **버전**: `v0.4.4` (versionCode 13)
+- **버전**: `v0.4.5` (versionCode 14)
+- **v0.4.5 리팩토링 (사용자 동작 불변)**:
+  - 포매팅 유틸 통합: `util/Formatters.kt` (`formatNumber`, `formatDecimal1`, `formatDateYmd`, `formatDateTime`, `formatClock`) — 기존 4~5개 파일 중복 제거
+  - `StatusBadge` 공통 Composable 승격: `ui/common/StatusBadge.kt` (Dashboard + Chart 공용)
+  - 상태 판별 로직 추출: `domain/AlgoStatusResolver.kt`의 `resolveDisplayStatus()`
+  - `ChartScreen.kt` 378줄 → `ChartScreen.kt` (84줄, 최상위) + `ChartContent.kt` (177줄, 본문) + `LineChartCanvas.kt` (105줄, Canvas 그리기) 로 3분할
 - **GitHub**: https://github.com/hojin12312/stock-alarm (public)
 - **최신 APK**: `dist/stock-alarm-debug.apk` — raw URL로 배포 중
 - **앱 아이콘**: 녹색 차트 + 원화 동전 (5 해상도 legacy + Adaptive Icon v26)

@@ -44,9 +44,11 @@ import com.example.playground.data.model.AlgorithmType
 import com.example.playground.data.model.MaStatus
 import com.example.playground.data.model.Market
 import com.example.playground.data.model.WatchedStock
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.playground.domain.resolveDisplayStatus
+import com.example.playground.ui.common.StatusBadge
+import com.example.playground.util.formatDateTime
+import com.example.playground.util.formatDecimal1
+import com.example.playground.util.formatNumber
 
 @Composable
 fun DashboardScreen(
@@ -74,7 +76,7 @@ fun DashboardScreen(
                 )
                 Text(
                     text = if (state.lastRunAt != null)
-                        "마지막 갱신: ${formatTime(state.lastRunAt!!)}"
+                        "마지막 갱신: ${formatDateTime(state.lastRunAt!!)}"
                     else "갱신 전",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -237,10 +239,10 @@ private fun DashboardCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                val status = when {
-                    selectedAlgorithms.size == 1 && AlgorithmType.MA_CROSS in selectedAlgorithms -> stock.lastStatus
-                    selectedAlgorithms.size == 1 -> stock.lastQuantStatus
-                    else -> stock.lastStatus
+                val status = if (selectedAlgorithms.size == 1) {
+                    resolveDisplayStatus(selectedAlgorithms.first(), stock.lastStatus, stock.lastQuantStatus)
+                } else {
+                    stock.lastStatus
                 }
                 StatusBadge(status)
             }
@@ -250,7 +252,7 @@ private fun DashboardCard(
             val close = stock.lastClose?.let { formatNumber(it) } ?: "-"
             val ma5 = stock.lastMa5?.let { formatNumber(it) } ?: "-"
             val ma20 = stock.lastMa20?.let { formatNumber(it) } ?: "-"
-            val rsi = stock.lastRsi2?.let { String.format(Locale.US, "%.1f", it) } ?: "-"
+            val rsi = stock.lastRsi2?.let { formatDecimal1(it) } ?: "-"
             val sma200 = stock.lastSma200?.let { formatNumber(it) } ?: "-"
             when {
                 selectedAlgorithms.size == 1 && AlgorithmType.MA_CROSS in selectedAlgorithms ->
@@ -264,7 +266,7 @@ private fun DashboardCard(
             }
             if (stock.lastUpdatedAt != null) {
                 Text(
-                    text = "업데이트 ${formatTime(stock.lastUpdatedAt)}",
+                    text = "업데이트 ${formatDateTime(stock.lastUpdatedAt)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -306,29 +308,3 @@ private fun MarketDropdown(selected: Market?, onSelect: (Market?) -> Unit) {
     }
 }
 
-@Composable
-private fun StatusBadge(status: MaStatus?) {
-    val (label, color) = when (status) {
-        MaStatus.BUY -> "매수" to Color(0xFF2E7D32)
-        MaStatus.SELL -> "매도" to Color(0xFFC62828)
-        null -> "대기" to MaterialTheme.colorScheme.outline
-    }
-    AssistChip(
-        onClick = {},
-        label = { Text(label) },
-        colors = AssistChipDefaults.assistChipColors(
-            containerColor = color.copy(alpha = 0.15f),
-            labelColor = color,
-        ),
-    )
-}
-
-private fun formatNumber(value: Double): String {
-    return if (value >= 1000) String.format(Locale.US, "%,.0f", value)
-    else String.format(Locale.US, "%.2f", value)
-}
-
-private fun formatTime(epochMs: Long): String {
-    val fmt = SimpleDateFormat("MM-dd HH:mm", Locale.KOREA)
-    return fmt.format(Date(epochMs))
-}

@@ -41,9 +41,7 @@ import com.example.playground.BuildConfig
 import com.example.playground.data.source.DataSourceId
 import com.example.playground.di.ServiceLocator
 import com.example.playground.ui.update.UpdateDialog
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.playground.util.formatClock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -169,7 +167,7 @@ fun SettingsScreen(
                                     append("저장된 키: ✓")
                                     if (state.kisTokenExpiresAt > System.currentTimeMillis()) {
                                         append(" · 토큰 만료 ")
-                                        append(formatTime(state.kisTokenExpiresAt))
+                                        append(formatClock(state.kisTokenExpiresAt))
                                     }
                                 },
                                 style = MaterialTheme.typography.bodySmall,
@@ -259,7 +257,3 @@ private fun DataSourceOption(
     }
 }
 
-private fun formatTime(epochMs: Long): String {
-    val fmt = SimpleDateFormat("HH:mm", Locale.getDefault())
-    return fmt.format(Date(epochMs))
-}

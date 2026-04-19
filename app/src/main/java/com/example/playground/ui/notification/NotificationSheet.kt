@@ -37,9 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.playground.data.local.NotificationEntity
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.playground.util.formatDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -233,7 +231,7 @@ private fun NotificationCard(item: NotificationEntity) {
                     color = statusColor,
                 )
                 Text(
-                    text = formatTime(item.createdAt),
+                    text = formatDateTime(item.createdAt),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -247,7 +245,3 @@ private fun NotificationCard(item: NotificationEntity) {
     }
 }
 
-private fun formatTime(epochMs: Long): String {
-    val fmt = SimpleDateFormat("MM-dd HH:mm", Locale.KOREA)
-    return fmt.format(Date(epochMs))
-}
