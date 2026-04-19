@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.playground.data.model.AlgorithmType
 import com.example.playground.data.model.ChartData
+import com.example.playground.data.prefs.AppSettings
 import com.example.playground.data.repo.StockRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,27 +15,32 @@ import kotlinx.coroutines.launch
 data class ChartUiState(
     val loading: Boolean = false,
     val data: ChartData? = null,
-    val range: String = "3mo",
+    val range: String = AppSettings.DEFAULT_CHART_RANGE,
     val error: String? = null,
 )
 
 class ChartViewModel(
     private val repo: StockRepository,
+    private val settings: AppSettings,
     private val symbol: String,
     private val algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
 ) : ViewModel() {
 
-    private val initialRange = if (algorithmType == AlgorithmType.RSI_SMA200) "1y" else "3mo"
-    private val _state = MutableStateFlow(ChartUiState(loading = true, range = initialRange))
+    private val _state = MutableStateFlow(ChartUiState(loading = true))
     val state: StateFlow<ChartUiState> = _state.asStateFlow()
 
     init {
-        load(_state.value.range)
+        viewModelScope.launch {
+            val saved = settings.currentChartRange()
+            _state.value = _state.value.copy(range = saved)
+            load(saved)
+        }
     }
 
     fun selectRange(range: String) {
         if (range == _state.value.range) return
         _state.value = _state.value.copy(range = range)
+        viewModelScope.launch { settings.setChartRange(range) }
         load(range)
     }
 
@@ -55,11 +61,12 @@ class ChartViewModel(
 
     class Factory(
         private val repo: StockRepository,
+        private val settings: AppSettings,
         private val symbol: String,
         private val algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ChartViewModel(repo, symbol, algorithmType) as T
+            ChartViewModel(repo, settings, symbol, algorithmType) as T
     }
 }

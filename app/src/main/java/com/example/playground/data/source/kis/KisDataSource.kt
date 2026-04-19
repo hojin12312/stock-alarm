@@ -162,6 +162,8 @@ class KisDataSource(
         "3mo" -> 120L
         "6mo" -> 230L
         "1y" -> 400L
+        "2y" -> 800L
+        "5y" -> 2000L
         else -> 120L
     }
 

@@ -49,6 +49,7 @@ import com.example.playground.ui.search.SearchScreen
 import com.example.playground.ui.search.SearchViewModel
 import com.example.playground.ui.settings.SettingsScreen
 import com.example.playground.ui.settings.SettingsViewModel
+import com.example.playground.ui.theme.AppTheme
 import com.example.playground.ui.watchlist.WatchlistScreen
 import com.example.playground.ui.watchlist.WatchlistViewModel
 import kotlinx.coroutines.launch
@@ -65,7 +66,7 @@ object NavRoutes {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaygroundApp() {
-    MaterialTheme {
+    AppTheme {
         Surface(modifier = Modifier, color = MaterialTheme.colorScheme.background) {
             val navController = rememberNavController()
             val context = LocalContext.current
@@ -195,8 +196,9 @@ fun PlaygroundApp() {
                         val algoName = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_ALGO)
                         val algo = runCatching { AlgorithmType.valueOf(algoName ?: "") }
                             .getOrDefault(AlgorithmType.MA_CROSS)
+                        val settings = ServiceLocator.provideAppSettings(context)
                         val vm: ChartViewModel = viewModel(
-                            factory = ChartViewModel.Factory(repo, symbol, algo),
+                            factory = ChartViewModel.Factory(repo, settings, symbol, algo),
                         )
                         ChartScreen(
                             viewModel = vm,

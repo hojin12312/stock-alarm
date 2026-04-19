@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -12,15 +13,23 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.example.playground.data.model.ChartData
+import com.example.playground.ui.theme.AppColors
 
-// 차트 라인 색상 — 범례(ChartContent)와 캔버스에서 공용.
-internal val Ma5LineColor = Color(0xFFFB8C00)
-internal val Ma20LineColor = Color(0xFF8E24AA)
+// 범례(ChartContent)와 캔버스가 공용으로 쓰는 차트 라인 색상 — 다크 모드 대응.
+internal val ma5LineColor: Color
+    @Composable @ReadOnlyComposable
+    get() = AppColors.extended.ma5Line
+
+internal val ma20LineColor: Color
+    @Composable @ReadOnlyComposable
+    get() = AppColors.extended.ma20Line
 
 @Composable
 internal fun LineChartCanvas(data: ChartData) {
     val priceColor = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+    val ma5Color = ma5LineColor
+    val ma20Color = ma20LineColor
 
     val closes = data.closes
     if (closes.isEmpty()) return
@@ -66,8 +75,8 @@ internal fun LineChartCanvas(data: ChartData) {
         )
 
         // null 구간은 끊어서 그림
-        drawSeries(data.ma5Series, Ma5LineColor, ::xOf, ::yOf, dashed = false, strokeWidth = 3f)
-        drawSeries(data.ma20Series, Ma20LineColor, ::xOf, ::yOf, dashed = true, strokeWidth = 3f)
+        drawSeries(data.ma5Series, ma5Color, ::xOf, ::yOf, dashed = false, strokeWidth = 3f)
+        drawSeries(data.ma20Series, ma20Color, ::xOf, ::yOf, dashed = true, strokeWidth = 3f)
     }
 }
 

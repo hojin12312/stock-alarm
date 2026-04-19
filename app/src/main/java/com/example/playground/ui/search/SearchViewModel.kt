@@ -8,17 +8,21 @@ import com.example.playground.data.repo.StockRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import java.io.IOException
+
+enum class SearchErrorType { NETWORK, RATE_LIMIT, OTHER }
+
+data class SearchError(val type: SearchErrorType, val message: String)
 
 data class SearchUiState(
     val query: String = "",
     val loading: Boolean = false,
     val results: List<StockSearchResult> = emptyList(),
     val watchedSymbols: Set<String> = emptySet(),
-    val error: String? = null,
+    val error: SearchError? = null,
 )
 
 class SearchViewModel(
@@ -49,17 +53,26 @@ class SearchViewModel(
             _state.value = if (result.isSuccess) {
                 _state.value.copy(loading = false, results = result.getOrDefault(emptyList()))
             } else {
-                _state.value.copy(
-                    loading = false,
-                    results = emptyList(),
-                    error = result.exceptionOrNull()?.message ?: "검색 실패",
-                )
+                val err = classify(result.exceptionOrNull())
+                _state.value.copy(loading = false, results = emptyList(), error = err)
             }
         }
     }
 
+    fun retry() = onSubmitSearch()
+
     fun addToWatchlist(result: StockSearchResult) {
         viewModelScope.launch { repo.addToWatchlist(result) }
+    }
+
+    private fun classify(t: Throwable?): SearchError {
+        val message = t?.message ?: "검색 실패"
+        val type = when {
+            t is IOException -> SearchErrorType.NETWORK
+            message.contains("429") -> SearchErrorType.RATE_LIMIT
+            else -> SearchErrorType.OTHER
+        }
+        return SearchError(type, message)
     }
 
     class Factory(private val repo: StockRepository) : ViewModelProvider.Factory {

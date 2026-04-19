@@ -49,7 +49,7 @@ internal fun ChartContent(
         Spacer(Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("1mo", "3mo", "6mo", "1y").forEach { r ->
+            listOf("1mo", "3mo", "6mo", "1y", "2y", "5y").forEach { r ->
                 FilterChip(
                     selected = r == range,
                     onClick = { onRangeSelect(r) },
@@ -148,8 +148,8 @@ private fun LegendRow() {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         LegendItem(color = MaterialTheme.colorScheme.primary, label = "종가")
-        LegendItem(color = Ma5LineColor, label = "5MA")
-        LegendItem(color = Ma20LineColor, label = "20MA (점선)")
+        LegendItem(color = ma5LineColor, label = "5MA")
+        LegendItem(color = ma20LineColor, label = "20MA (점선)")
     }
 }
 

@@ -7,12 +7,18 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 ## 현재 상태 (2026-04-20 기준)
 
-- **버전**: `v0.4.5` (versionCode 14)
+- **버전**: `v0.4.6` (versionCode 15)
+- **v0.4.6 UX 개선**:
+  - **다크 모드 정식 지원**: `ui/theme/Theme.kt` + `Color.kt`. `AppTheme { }` 래퍼 + `ExtendedColors`(buy/sell/ma5Line/ma20Line) 라이트/다크 변종. 하드코딩 9개 Color는 전부 `AppColors.extended` 경유.
+  - **차트 range 통일 + 확장**: `AppSettings.chartRange` (DataStore) 로 마지막 선택을 탭 간 공유. 칩 `1mo/3mo/6mo/1y/2y/5y` (기존 4개 → 6개). 초기값 `3mo`.
+  - **검색 에러 피드백**: `SearchErrorType`(NETWORK/RATE_LIMIT/OTHER) 분류 + 상황별 안내 문구 + 다시 시도 버튼.
+  - **KIS 키 입력 UX**: AppKey/Secret 보이기·숨기기 토글 아이콘, 저장 후 `"저장된 AppKey: ****_****_{뒤3글자}"` 노출.
+  - **알림 탭 날짜 그룹핑**: 오늘/어제/이번 주/지난 주/그 이전 헤더. 필터 적용 후 0건일 때 "해당 조건의 알림이 없어" 분기.
 - **v0.4.5 리팩토링 (사용자 동작 불변)**:
-  - 포매팅 유틸 통합: `util/Formatters.kt` (`formatNumber`, `formatDecimal1`, `formatDateYmd`, `formatDateTime`, `formatClock`) — 기존 4~5개 파일 중복 제거
-  - `StatusBadge` 공통 Composable 승격: `ui/common/StatusBadge.kt` (Dashboard + Chart 공용)
-  - 상태 판별 로직 추출: `domain/AlgoStatusResolver.kt`의 `resolveDisplayStatus()`
-  - `ChartScreen.kt` 378줄 → `ChartScreen.kt` (84줄, 최상위) + `ChartContent.kt` (177줄, 본문) + `LineChartCanvas.kt` (105줄, Canvas 그리기) 로 3분할
+  - 포매팅 유틸 통합: `util/Formatters.kt` (`formatNumber`, `formatDecimal1`, `formatDateYmd`, `formatDateTime`, `formatClock`)
+  - `StatusBadge` 공통 Composable: `ui/common/StatusBadge.kt`
+  - 상태 판별 로직: `domain/AlgoStatusResolver.kt::resolveDisplayStatus()`
+  - `ChartScreen.kt` 378줄 → 3분할 (`ChartScreen.kt` 84줄 + `ChartContent.kt` 177줄 + `LineChartCanvas.kt` 105줄)
 - **GitHub**: https://github.com/hojin12312/stock-alarm (public)
 - **최신 APK**: `dist/stock-alarm-debug.apk` — raw URL로 배포 중
 - **앱 아이콘**: 녹색 차트 + 원화 동전 (5 해상도 legacy + Adaptive Icon v26)

@@ -11,11 +11,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -28,13 +33,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.playground.BuildConfig
@@ -164,7 +172,13 @@ fun SettingsScreen(
                         if (stored) {
                             Text(
                                 text = buildString {
-                                    append("저장된 키: ✓")
+                                    append("저장된 AppKey: ")
+                                    if (state.kisKeySuffix.isNotEmpty()) {
+                                        append("****_****_")
+                                        append(state.kisKeySuffix)
+                                    } else {
+                                        append("✓")
+                                    }
                                     if (state.kisTokenExpiresAt > System.currentTimeMillis()) {
                                         append(" · 토큰 만료 ")
                                         append(formatClock(state.kisTokenExpiresAt))
@@ -180,12 +194,23 @@ fun SettingsScreen(
                             )
                         }
 
+                        var keyVisible by remember { mutableStateOf(false) }
+                        var secretVisible by remember { mutableStateOf(false) }
+
                         OutlinedTextField(
                             value = state.kisKeyInput,
                             onValueChange = viewModel::onKeyInput,
                             label = { Text("AppKey") },
                             singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
+                            visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { keyVisible = !keyVisible }) {
+                                    Icon(
+                                        imageVector = if (keyVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                        contentDescription = if (keyVisible) "AppKey 가리기" else "AppKey 보기",
+                                    )
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             enabled = !state.busy,
                         )
@@ -194,7 +219,15 @@ fun SettingsScreen(
                             onValueChange = viewModel::onSecretInput,
                             label = { Text("AppSecret") },
                             singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
+                            visualTransformation = if (secretVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { secretVisible = !secretVisible }) {
+                                    Icon(
+                                        imageVector = if (secretVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                        contentDescription = if (secretVisible) "AppSecret 가리기" else "AppSecret 보기",
+                                    )
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             enabled = !state.busy,
                         )

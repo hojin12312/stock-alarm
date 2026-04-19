@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -37,7 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.playground.data.local.NotificationEntity
+import com.example.playground.ui.theme.AppColors
 import com.example.playground.util.formatDateTime
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +51,8 @@ fun NotificationSheetContent(
     onDelete: (Long) -> Unit,
     onDeleteAll: () -> Unit,
 ) {
+    val filterActive = filter.type != null || filter.status != null || filter.market != null
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -74,14 +77,12 @@ fun NotificationSheetContent(
 
         Spacer(Modifier.height(8.dp))
 
-        // 필터 행
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            // 알고리즘 타입 필터
             FilterChip(
                 selected = filter.type == null,
                 onClick = { onTypeFilter(null) },
@@ -100,7 +101,6 @@ fun NotificationSheetContent(
 
             Spacer(Modifier.width(4.dp))
 
-            // 매수/매도 필터
             FilterChip(
                 selected = filter.status == "BUY",
                 onClick = { onStatusFilter(if (filter.status == "BUY") null else "BUY") },
@@ -114,7 +114,6 @@ fun NotificationSheetContent(
 
             Spacer(Modifier.width(4.dp))
 
-            // 시장 필터
             FilterChip(
                 selected = filter.market == "US",
                 onClick = { onMarketFilter(if (filter.market == "US") null else "US") },
@@ -137,26 +136,91 @@ fun NotificationSheetContent(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "알림이 없어",
+                    text = if (filterActive) "해당 조건의 알림이 없어" else "알림이 없어",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         } else {
+            val grouped = groupByDate(items)
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f, fill = false),
             ) {
-                items(items, key = { it.id }) { item ->
-                    SwipeToDeleteItem(
-                        item = item,
-                        onDelete = { onDelete(item.id) },
-                    )
+                grouped.forEach { (label, groupItems) ->
+                    item(key = "header:$label") {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
+                        )
+                    }
+                    items(groupItems.size, key = { idx -> "item:${groupItems[idx].id}" }) { idx ->
+                        val item = groupItems[idx]
+                        SwipeToDeleteItem(
+                            item = item,
+                            onDelete = { onDelete(item.id) },
+                        )
+                    }
                 }
             }
         }
     }
 }
+
+private enum class DateGroup(val order: Int, val label: String) {
+    TODAY(0, "오늘"),
+    YESTERDAY(1, "어제"),
+    THIS_WEEK(2, "이번 주"),
+    LAST_WEEK(3, "지난 주"),
+    OLDER(4, "그 이전"),
+}
+
+// 현재 시각 기준으로 알림을 오늘/어제/이번 주/지난 주/그 이전으로 분류.
+private fun groupByDate(items: List<NotificationEntity>): List<Pair<String, List<NotificationEntity>>> {
+    val now = Calendar.getInstance()
+    val todayStart = startOfDay(now)
+    val yesterdayStart = todayStart - ONE_DAY_MS
+    val weekStart = startOfWeek(now)
+    val lastWeekStart = weekStart - ONE_WEEK_MS
+
+    val grouped = items.groupBy { item ->
+        val t = item.createdAt
+        when {
+            t >= todayStart -> DateGroup.TODAY
+            t >= yesterdayStart -> DateGroup.YESTERDAY
+            t >= weekStart -> DateGroup.THIS_WEEK
+            t >= lastWeekStart -> DateGroup.LAST_WEEK
+            else -> DateGroup.OLDER
+        }
+    }
+    return DateGroup.values()
+        .sortedBy { it.order }
+        .mapNotNull { group -> grouped[group]?.let { group.label to it } }
+}
+
+private fun startOfDay(cal: Calendar): Long {
+    val c = cal.clone() as Calendar
+    c.set(Calendar.HOUR_OF_DAY, 0)
+    c.set(Calendar.MINUTE, 0)
+    c.set(Calendar.SECOND, 0)
+    c.set(Calendar.MILLISECOND, 0)
+    return c.timeInMillis
+}
+
+private fun startOfWeek(cal: Calendar): Long {
+    val c = cal.clone() as Calendar
+    c.set(Calendar.DAY_OF_WEEK, c.firstDayOfWeek)
+    c.set(Calendar.HOUR_OF_DAY, 0)
+    c.set(Calendar.MINUTE, 0)
+    c.set(Calendar.SECOND, 0)
+    c.set(Calendar.MILLISECOND, 0)
+    return c.timeInMillis
+}
+
+private const val ONE_DAY_MS = 24L * 60 * 60 * 1000
+private const val ONE_WEEK_MS = 7L * ONE_DAY_MS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -201,7 +265,8 @@ private fun SwipeToDeleteItem(
 
 @Composable
 private fun NotificationCard(item: NotificationEntity) {
-    val statusColor = if (item.status == "BUY") Color(0xFF2E7D32) else Color(0xFFC62828)
+    val ext = AppColors.extended
+    val statusColor = if (item.status == "BUY") ext.buy else ext.sell
     val typeLabel = if (item.type == "MA") "MA" else "RSI"
     val statusLabel = if (item.status == "BUY") "매수" else "매도"
     val marketLabel = when (item.market) {
@@ -244,4 +309,3 @@ private fun NotificationCard(item: NotificationEntity) {
         }
     }
 }
-

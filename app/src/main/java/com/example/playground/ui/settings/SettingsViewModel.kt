@@ -22,6 +22,7 @@ data class SettingsUiState(
     val kisKeyInput: String = "",
     val kisSecretInput: String = "",
     val kisHasStoredKey: Boolean = false,
+    val kisKeySuffix: String = "",
     val kisTokenExpiresAt: Long = 0L,
     val busy: Boolean = false,
     val message: String? = null,
@@ -36,7 +37,12 @@ class SettingsViewModel(
     private val kisDataSource: KisDataSource,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(SettingsUiState(kisHasStoredKey = credentials.hasCredentials()))
+    private val _state = MutableStateFlow(
+        SettingsUiState(
+            kisHasStoredKey = credentials.hasCredentials(),
+            kisKeySuffix = credentials.load()?.appkey?.takeLast(3).orEmpty(),
+        ),
+    )
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
     init {
@@ -84,6 +90,7 @@ class SettingsViewModel(
                     kisKeyInput = "",
                     kisSecretInput = "",
                     kisHasStoredKey = true,
+                    kisKeySuffix = credentials.load()?.appkey?.takeLast(3).orEmpty(),
                     kisTokenExpiresAt = result.getOrThrow(),
                     message = "인증 성공! 이제 KIS로 시세를 받아올게",
                 )
@@ -100,6 +107,7 @@ class SettingsViewModel(
         credentials.clear()
         _state.value = _state.value.copy(
             kisHasStoredKey = false,
+            kisKeySuffix = "",
             kisTokenExpiresAt = 0L,
             message = "저장된 키를 지웠어",
         )

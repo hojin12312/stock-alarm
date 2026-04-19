@@ -6,16 +6,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import com.example.playground.data.model.MaStatus
+import com.example.playground.ui.theme.AppColors
 
 // BUY/SELL/대기 상태를 공통 AssistChip으로 표시. 대시보드·차트 화면 공용.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatusBadge(status: MaStatus?) {
+    val ext = AppColors.extended
     val (label, color) = when (status) {
-        MaStatus.BUY -> "매수" to Color(0xFF2E7D32)
-        MaStatus.SELL -> "매도" to Color(0xFFC62828)
+        MaStatus.BUY -> "매수" to ext.buy
+        MaStatus.SELL -> "매도" to ext.sell
         null -> "대기" to MaterialTheme.colorScheme.outline
     }
     AssistChip(

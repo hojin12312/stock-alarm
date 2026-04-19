@@ -27,7 +27,13 @@ class AppSettings(private val context: Context) {
         prefs[KEY_KIS_TOKEN_EXPIRES_AT] ?: 0L
     }
 
+    val chartRange: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_CHART_RANGE] ?: DEFAULT_CHART_RANGE
+    }
+
     suspend fun currentDataSourceId(): DataSourceId = dataSourceId.first()
+
+    suspend fun currentChartRange(): String = chartRange.first()
 
     suspend fun setDataSourceId(id: DataSourceId) {
         context.dataStore.edit { it[KEY_DATA_SOURCE] = id.name }
@@ -37,8 +43,15 @@ class AppSettings(private val context: Context) {
         context.dataStore.edit { it[KEY_KIS_TOKEN_EXPIRES_AT] = epochMs }
     }
 
+    suspend fun setChartRange(range: String) {
+        context.dataStore.edit { it[KEY_CHART_RANGE] = range }
+    }
+
     companion object {
+        const val DEFAULT_CHART_RANGE = "3mo"
+
         private val KEY_DATA_SOURCE = stringPreferencesKey("data_source_id")
         private val KEY_KIS_TOKEN_EXPIRES_AT = longPreferencesKey("kis_token_expires_at")
+        private val KEY_CHART_RANGE = stringPreferencesKey("chart_range")
     }
 }

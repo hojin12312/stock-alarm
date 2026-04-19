@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.playground.data.model.Market
 import com.example.playground.data.model.StockSearchResult
+import androidx.compose.material3.OutlinedButton
 
 @Composable
 fun SearchScreen(
@@ -78,9 +79,9 @@ fun SearchScreen(
                 }
             }
             state.error != null -> {
-                Text(
-                    text = "오류: ${state.error}",
-                    color = MaterialTheme.colorScheme.error,
+                ErrorBlock(
+                    error = state.error!!,
+                    onRetry = viewModel::retry,
                 )
             }
             state.results.isEmpty() -> {
@@ -145,6 +146,28 @@ private fun ResultCard(
                 Text(if (alreadyWatched) "등록됨" else "+관심")
             }
         }
+    }
+}
+
+@Composable
+private fun ErrorBlock(error: SearchError, onRetry: () -> Unit) {
+    val (headline, detail) = when (error.type) {
+        SearchErrorType.NETWORK -> "인터넷 연결을 확인해주세요" to error.message
+        SearchErrorType.RATE_LIMIT -> "요청이 많아 잠시 후 다시 시도해주세요" to error.message
+        SearchErrorType.OTHER -> "검색에 실패했어요" to error.message
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = headline,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+        Text(
+            text = detail,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedButton(onClick = onRetry) { Text("다시 시도") }
     }
 }
 
