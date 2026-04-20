@@ -14,7 +14,7 @@
 | `docs/01-search.png … 06-notification.png` | 스크린샷 |
 | `README.md` | 사용자용 설치·업데이트 가이드 |
 
-## 현재 버전
+## 버전 히스토리
 
 | 버전 | versionCode | 주요 내용 |
 |---|---|---|
@@ -23,12 +23,24 @@
 | `v0.3.0` | 3 | 데이터 소스 선택(Yahoo / KIS) + Settings 탭 + 키 암호화 저장 + 네트워크 하드닝 |
 | `v0.3.1` | 4 | 검색 query1 핫픽스 + 자동 업데이트 (앱 시작 시 dist/version.json 폴링) |
 | `v0.3.2` | 5 | 대시보드 필터 UI 개선: 매수/매도 드롭다운 + 시장별(전체/미국/한국) 탭 |
-| `v0.3.3` | **6** | 설정에 수동 업데이트 확인 버튼 + 현재 버전 표시 |
+| `v0.3.3` | 6 | 설정에 수동 업데이트 확인 버튼 + 현재 버전 표시 |
+| `v0.3.4` | 7 | 대시보드 필터 배치 교체 + 검색 placeholder 수정 |
+| `v0.3.5` | 8 | 업데이트 체크 시 HTTP 캐시 무시 (최신 version.json 확실히 읽기) |
+| `v0.4.0` | 9 | RSI(2)+SMA(200) 듀얼 알고리즘 전략 추가 |
+| `v0.4.1` | 10 | 앱 내 알림 센터 추가 |
+| `v0.4.2` | 11 | 알림 필터 + RSI 탭 차트 연동 버그 수정 |
+| `v0.4.3` | 12 | RSI 탭 차트 초기 range 1y 자동 설정 (대기 버그 수정) |
+| `v0.4.4` | 13 | 알고리즘 체크리스트 필터 + 교집합 모드 |
+| `v0.4.5` | 14 | 리팩토링 (사용자 동작 불변) |
+| `v0.4.6` | 15 | UX 개선 세트: 다크 모드 지원, 차트 range 통일(+2y/5y), 검색 에러 재시도, KIS 키 보이기 토글, 알림 탭 날짜 그룹핑 |
+| `v0.4.7` | **16** | 앱 내 업데이트 다이얼로그에 "전체 업데이트 히스토리" 링크 추가 (외부 브라우저) + GitHub Releases 도입 |
+
+`v0.4.7` 부터는 [GitHub Releases](https://github.com/hojin12312/stock-alarm/releases) 에도 버전별 상세 노트가 등록된다. 이전 버전(`v0.4.6` 이하)은 이 표로만 확인.
 
 버전 값은 `app/build.gradle.kts`의 `defaultConfig`:
 ```kotlin
-versionCode = 6
-versionName = "0.3.3"
+versionCode = 16
+versionName = "0.4.7"
 ```
 
 ## 릴리스 절차 (새 버전 올릴 때)
@@ -38,8 +50,9 @@ versionName = "0.3.3"
 3. **빌드 + 검증** — `./gradlew installDebug` → 에뮬레이터에서 주요 플로우 screencap.
 4. **APK 복사** — `cp app/build/outputs/apk/debug/app-debug.apk dist/stock-alarm-debug.apk`
 5. **`dist/version.json` 갱신** — `versionCode`, `versionName`, `notes`를 새 릴리스 값으로. **APK와 같은 커밋**으로 묶어야 raw URL 캐시 미스매치를 피한다.
-6. **README / docs 업데이트** — 새 기능 반영, 스크린샷 교체.
+6. **README / docs 업데이트** — 새 기능 반영, 스크린샷 교체. `docs/RELEASE.md` 의 버전 히스토리 표에도 한 줄 추가.
 7. **커밋 + 푸시** — 커밋 메시지에 버전 명시.
+8. **GitHub Release 등록** — 푸시 후 태그 생성 + APK 첨부. 앱 내 "전체 업데이트 히스토리" 링크가 이 페이지(`/releases`)를 가리킨다.
 
 ```bash
 cd ~/home_apps/android-playground
@@ -47,8 +60,21 @@ cd ~/home_apps/android-playground
 cp app/build/outputs/apk/debug/app-debug.apk dist/stock-alarm-debug.apk
 # dist/version.json 손으로 수정 (versionCode, versionName, notes)
 git add -A
-git commit -m "v0.4.0: <changes>"
+git commit -m "v0.4.7: <changes>"
 git push
+
+# GitHub Release 생성 (태그 자동 생성됨)
+gh release create v0.4.7 dist/stock-alarm-debug.apk \
+  --title "v0.4.7" \
+  --notes "$(cat <<'EOF'
+## 변경 사항
+- <bullet>
+- <bullet>
+
+---
+이전 버전(v0.4.6 이하)의 변경 이력은 [docs/RELEASE.md 버전 히스토리 표](https://github.com/hojin12312/stock-alarm/blob/main/docs/RELEASE.md#버전-히스토리)에서 확인할 수 있어.
+EOF
+)"
 ```
 
 > 자동 업데이트 흐름: 사용자가 앱을 켜면 `MainActivity`가 백그라운드로 `dist/version.json`을 raw URL로 가져와 `BuildConfig.VERSION_CODE`와 비교 → 더 큰 값이면 다이얼로그 → DownloadManager로 APK 다운로드 → 시스템 설치 화면. 사용자가 "설치" 한 번 더 탭해야 함 (Android 보안상 완전 무인 설치는 불가).
