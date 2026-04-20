@@ -7,7 +7,12 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 ## 현재 상태 (2026-04-20 기준)
 
-- **버전**: `v0.4.6` (versionCode 15)
+- **버전**: `v0.4.7` (versionCode 16)
+- **v0.4.7 GitHub Releases 도입 + 업데이트 다이얼로그 히스토리 링크**:
+  - `UpdateDialog.kt` — "📜 전체 업데이트 히스토리 보기" 텍스트 링크 추가. `Intent.ACTION_VIEW`로 외부 웹 브라우저에서 `github.com/hojin12312/stock-alarm/releases` 오픈. 긴 notes 대비 `heightIn(max=360.dp)` + `verticalScroll` 적용.
+  - 이번 버전부터 `gh release create`로 정식 GitHub Release 등록 (태그 `v0.4.7`, APK 자산 첨부). 첫 릴리스 노트 끝에 "이전 버전(v0.4.6 이하) 변경 이력 → `docs/RELEASE.md` 버전 히스토리 표" 링크 포함.
+  - `docs/RELEASE.md` "현재 버전" 섹션 → "버전 히스토리"로 이름 변경 + v0.3.4~v0.4.7 표 채움. 릴리스 절차에 `gh release create` 단계 8번으로 추가.
+  - **다이얼로그 실물 UI 확인 지연**: v0.4.7 설치본이 띄우는 다이얼로그(링크 포함)는 **다음 릴리스 v0.4.8 배포 시점에** v0.4.7 사용자에게 처음으로 노출됨 (자동 업데이트 메커니즘의 1버전 지연 특성).
 - **v0.4.6 UX 개선**:
   - **다크 모드 정식 지원**: `ui/theme/Theme.kt` + `Color.kt`. `AppTheme { }` 래퍼 + `ExtendedColors`(buy/sell/ma5Line/ma20Line) 라이트/다크 변종. 하드코딩 9개 Color는 전부 `AppColors.extended` 경유.
   - **차트 range 통일 + 확장**: `AppSettings.chartRange` (DataStore) 로 마지막 선택을 탭 간 공유. 칩 `1mo/3mo/6mo/1y/2y/5y` (기존 4개 → 6개). 초기값 `3mo`.
