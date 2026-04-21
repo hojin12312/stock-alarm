@@ -16,8 +16,16 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.roundToInt
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -39,6 +47,20 @@ internal fun ChartContent(
     range: String,
     onRangeSelect: (String) -> Unit,
 ) {
+    val totalSize = data.closes.size
+    var zoomedCount by remember { mutableStateOf(data.displayCount.coerceIn(10, totalSize.coerceAtLeast(10))) }
+    var scrollOffset by remember { mutableStateOf(0) }
+
+    // range 변경 시 줌·스크롤 초기화
+    LaunchedEffect(data.displayCount) {
+        zoomedCount = data.displayCount.coerceIn(10, totalSize.coerceAtLeast(10))
+        scrollOffset = 0
+    }
+
+    val maxOffset = (totalSize - zoomedCount).coerceAtLeast(0)
+    val clampedOffset = scrollOffset.coerceIn(0, maxOffset)
+    val displayData = data.copy(displayCount = zoomedCount, displayOffset = clampedOffset)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,8 +96,35 @@ internal fun ChartContent(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
         ) {
-            Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-                LineChartCanvas(data)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { centroid, pan, zoom, _ ->
+                            if (totalSize == 0) return@detectTransformGestures
+                            val curCount = zoomedCount
+                            val curOffset = scrollOffset.coerceIn(0, (totalSize - curCount).coerceAtLeast(0))
+                            if (zoom != 1f) {
+                                val newCount = (curCount / zoom).roundToInt().coerceIn(10, totalSize)
+                                val pivotItem = curOffset + (centroid.x / size.width * curCount).roundToInt()
+                                scrollOffset = (pivotItem - (centroid.x / size.width * newCount).roundToInt())
+                                    .coerceIn(0, (totalSize - newCount).coerceAtLeast(0))
+                                zoomedCount = newCount
+                            } else {
+                                val pixPerItem = size.width / curCount.toFloat()
+                                if (pixPerItem > 0f) {
+                                    val delta = (pan.x / pixPerItem).roundToInt()
+                                    if (delta != 0) {
+                                        scrollOffset = (curOffset + delta)
+                                            .coerceIn(0, (totalSize - curCount).coerceAtLeast(0))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(12.dp),
+            ) {
+                LineChartCanvas(data = displayData)
             }
         }
 
@@ -84,10 +133,10 @@ internal fun ChartContent(
         // 차트 x축에 정렬되도록 좌우 패딩을 Card 내부와 동일하게.
         Column(modifier = Modifier.padding(horizontal = 12.dp)) {
             if (AlgorithmType.MA_CROSS in selectedAlgorithms) {
-                MaSignalTimelineBar(data)
+                MaSignalTimelineBar(displayData)
             }
             if (AlgorithmType.RSI_SMA200 in selectedAlgorithms) {
-                RsiSignalTimelineBar(data)
+                RsiSignalTimelineBar(displayData)
             }
         }
 
@@ -97,11 +146,11 @@ internal fun ChartContent(
 
         Spacer(Modifier.height(8.dp))
 
-        if (data.displayTimestamps.isNotEmpty()) {
-            val first = formatDateYmd(data.displayTimestamps.first())
-            val last = formatDateYmd(data.displayTimestamps.last())
+        if (displayData.displayTimestamps.isNotEmpty()) {
+            val first = formatDateYmd(displayData.displayTimestamps.first())
+            val last = formatDateYmd(displayData.displayTimestamps.last())
             Text(
-                text = "$first ~ $last  ·  데이터 ${data.displayCloses.size}개",
+                text = "$first ~ $last  ·  데이터 ${displayData.displayCloses.size}개",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

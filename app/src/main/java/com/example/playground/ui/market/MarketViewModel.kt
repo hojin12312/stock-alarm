@@ -9,6 +9,7 @@ import com.example.playground.util.formatNumber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -26,20 +27,24 @@ class MarketViewModel(private val repo: StockRepository) : ViewModel() {
     private val _states = MutableStateFlow(MarketIndex.values().map { MarketCardState(it) })
     val states: StateFlow<List<MarketCardState>> = _states.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadAll()
     }
 
     fun refresh() {
+        _isRefreshing.value = true
         _states.value = MarketIndex.values().map { MarketCardState(it, isLoading = true) }
         loadAll()
     }
 
     private fun loadAll() {
         viewModelScope.launch {
-            MarketIndex.values().forEach { index ->
-                launch { loadIndex(index) }
-            }
+            val jobs = MarketIndex.values().map { index -> launch { loadIndex(index) } }
+            jobs.joinAll()
+            _isRefreshing.value = false
         }
     }
 

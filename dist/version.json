@@ -1,6 +1,6 @@
 {
-  "versionCode": 23,
-  "versionName": "0.5.4",
+  "versionCode": 24,
+  "versionName": "0.5.5",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.5.4 — 지수/시장 탭 추가. 코스피·코스닥·나스닥·다우존스·S&P 500·금 선물·USD/KRW 실시간 현재가 + 등락률 카드 표시. 카드 탭 시 기존 차트 화면(MA/RSI 알고리즘)으로 진입."
+  "notes": "v0.5.5 — 지수 탭 당겨서 새로고침 + 차트 핀치줌/드래그 스크롤 추가."
 }
