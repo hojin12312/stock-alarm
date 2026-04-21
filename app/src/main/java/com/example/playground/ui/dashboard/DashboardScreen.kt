@@ -54,7 +54,7 @@ import com.example.playground.util.formatNumber
 fun DashboardScreen(
     viewModel: DashboardViewModel,
     contentPadding: PaddingValues,
-    onStockClick: (String, AlgorithmType) -> Unit,
+    onStockClick: (String, Set<AlgorithmType>) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val filtered = state.filtered
@@ -180,7 +180,7 @@ fun DashboardScreen(
                         DashboardCard(
                             stock = stock,
                             selectedAlgorithms = state.selectedAlgorithms,
-                            onClick = { onStockClick(stock.symbol, state.chartAlgorithmType) },
+                            onClick = { onStockClick(stock.symbol, state.selectedAlgorithms) },
                         )
                     }
                 }

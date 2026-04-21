@@ -57,10 +57,10 @@ import kotlinx.coroutines.launch
 object NavRoutes {
     const val CHART_PREFIX = "chart"
     const val CHART_ARG_SYMBOL = "symbol"
-    const val CHART_ARG_ALGO = "algo"
-    fun chartFor(symbol: String, algo: AlgorithmType = AlgorithmType.MA_CROSS): String =
-        "$CHART_PREFIX/$symbol?$CHART_ARG_ALGO=${algo.name}"
-    const val CHART_PATTERN = "$CHART_PREFIX/{symbol}?$CHART_ARG_ALGO={algo}"
+    const val CHART_ARG_ALGOS = "algos"
+    fun chartFor(symbol: String, algos: Set<AlgorithmType> = setOf(AlgorithmType.MA_CROSS)): String =
+        "$CHART_PREFIX/$symbol?$CHART_ARG_ALGOS=${algos.joinToString(",") { it.name }}"
+    const val CHART_PATTERN = "$CHART_PREFIX/{symbol}?$CHART_ARG_ALGOS={algos}"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -171,8 +171,8 @@ fun PlaygroundApp() {
                         DashboardScreen(
                             viewModel = vm,
                             contentPadding = innerPadding,
-                            onStockClick = { symbol, algo ->
-                                navController.navigate(NavRoutes.chartFor(symbol, algo))
+                            onStockClick = { symbol, algos ->
+                                navController.navigate(NavRoutes.chartFor(symbol, algos))
                             },
                         )
                     }
@@ -186,23 +186,25 @@ fun PlaygroundApp() {
                         route = NavRoutes.CHART_PATTERN,
                         arguments = listOf(
                             navArgument(NavRoutes.CHART_ARG_SYMBOL) { type = NavType.StringType },
-                            navArgument(NavRoutes.CHART_ARG_ALGO) {
+                            navArgument(NavRoutes.CHART_ARG_ALGOS) {
                                 type = NavType.StringType
                                 defaultValue = AlgorithmType.MA_CROSS.name
                             },
                         ),
                     ) { backStackEntry ->
                         val symbol = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_SYMBOL).orEmpty()
-                        val algoName = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_ALGO)
-                        val algo = runCatching { AlgorithmType.valueOf(algoName ?: "") }
-                            .getOrDefault(AlgorithmType.MA_CROSS)
+                        val algosStr = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_ALGOS) ?: ""
+                        val algos = algosStr.split(",")
+                            .mapNotNull { runCatching { AlgorithmType.valueOf(it.trim()) }.getOrNull() }
+                            .toSet()
+                            .ifEmpty { setOf(AlgorithmType.MA_CROSS) }
                         val settings = ServiceLocator.provideAppSettings(context)
                         val vm: ChartViewModel = viewModel(
-                            factory = ChartViewModel.Factory(repo, settings, symbol, algo),
+                            factory = ChartViewModel.Factory(repo, settings, symbol),
                         )
                         ChartScreen(
                             viewModel = vm,
-                            algorithmType = algo,
+                            initialAlgorithms = algos,
                             contentPadding = innerPadding,
                             onBack = { navController.popBackStack() },
                         )

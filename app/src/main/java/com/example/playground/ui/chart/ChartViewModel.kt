@@ -23,7 +23,6 @@ class ChartViewModel(
     private val repo: StockRepository,
     private val settings: AppSettings,
     private val symbol: String,
-    private val algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChartUiState(loading = true))
@@ -63,10 +62,9 @@ class ChartViewModel(
         private val repo: StockRepository,
         private val settings: AppSettings,
         private val symbol: String,
-        private val algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ChartViewModel(repo, settings, symbol, algorithmType) as T
+            ChartViewModel(repo, settings, symbol) as T
     }
 }

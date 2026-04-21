@@ -26,9 +26,6 @@ data class DashboardUiState(
     val refreshing: Boolean = false,
     val lastRunAt: Long? = null,
 ) {
-    val chartAlgorithmType: AlgorithmType
-        get() = if (selectedAlgorithms.size == 1) selectedAlgorithms.first() else AlgorithmType.MA_CROSS
-
     val filtered: List<WatchedStock>
         get() {
             val text = textFilter.trim().lowercase()

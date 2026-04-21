@@ -1,12 +1,10 @@
 package com.example.playground.ui.chart
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,10 +25,7 @@ internal fun MaSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier)
     val sell = sellColor
     val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
     val signal = ChartSignals.maSignalSeries(data.ma5Series, data.ma20Series)
-    TimelineBarRow(
-        label = "MA",
-        modifier = modifier,
-    ) {
+    TimelineBarBox(label = "MA", modifier = modifier) {
         Canvas(modifier = Modifier.fillMaxWidth().height(14.dp)) {
             val w = size.width
             val h = size.height
@@ -67,47 +62,62 @@ internal fun MaSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier)
 internal fun RsiSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier) {
     val buy = buyColor
     val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
-    val signalIndices = ChartSignals.rsiBuyIndices(data.closes, data.sma200Series, data.rsi2Series)
-    TimelineBarRow(
-        label = "RSI",
-        modifier = modifier,
-    ) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(14.dp)) {
-            val w = size.width
-            val h = size.height
-            drawRect(color = trackColor, size = Size(w, h))
-            val n = data.closes.size.takeIf { it > 0 } ?: return@Canvas
-            // 시그널 발생일마다 2dp 폭의 녹색 세로 바
-            val barWidth = (w / n).coerceAtLeast(2f)
-            signalIndices.forEach { i ->
-                val x = w * i / n.toFloat()
-                drawRect(
-                    color = buy,
-                    topLeft = Offset(x, 0f),
-                    size = Size(barWidth, h),
+    // SMA(200) 계산에 200일 데이터가 필요. 범위가 짧으면 전부 null → 신호 없음.
+    val hasEnoughData = data.sma200Series.any { it != null }
+    val signalIndices = if (hasEnoughData) {
+        ChartSignals.rsiBuyIndices(data.closes, data.sma200Series, data.rsi2Series)
+    } else emptyList()
+    TimelineBarBox(label = "RSI", modifier = modifier) {
+        if (!hasEnoughData) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(14.dp)
+                    .padding(start = 36.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    text = "SMA(200) 계산에 1y 이상 필요",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        } else {
+            Canvas(modifier = Modifier.fillMaxWidth().height(14.dp)) {
+                val w = size.width
+                val h = size.height
+                drawRect(color = trackColor, size = Size(w, h))
+                val n = data.closes.size.takeIf { it > 0 } ?: return@Canvas
+                val barWidth = (w / n).coerceAtLeast(2f)
+                signalIndices.forEach { i ->
+                    val x = w * i / n.toFloat()
+                    drawRect(
+                        color = buy,
+                        topLeft = Offset(x, 0f),
+                        size = Size(barWidth, h),
+                    )
+                }
             }
         }
     }
 }
 
+// label을 Canvas 위에 오버레이 — Row로 배치하면 label 폭만큼 Canvas가 줄어 차트 x축과 어긋남.
 @Composable
-private fun TimelineBarRow(
+private fun TimelineBarBox(
     label: String,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Row(
-        modifier = modifier.padding(vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Box(modifier = modifier.padding(vertical = 2.dp)) {
+        content()
         Text(
             text = label,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 3.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(32.dp),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
-        Spacer(Modifier.width(4.dp))
-        content()
     }
 }

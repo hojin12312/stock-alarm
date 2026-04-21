@@ -30,14 +30,14 @@ import com.example.playground.data.model.AlgorithmType
 @Composable
 fun ChartScreen(
     viewModel: ChartViewModel,
-    algorithmType: AlgorithmType = AlgorithmType.MA_CROSS,
+    initialAlgorithms: Set<AlgorithmType> = setOf(AlgorithmType.MA_CROSS),
     contentPadding: PaddingValues,
     onBack: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    // 초기값은 진입 시 전달된 알고리즘. 화면 안에서 토글 가능, 회전 시 유지.
+    // 진입 시 Dashboard에서 선택된 알고리즘 그대로 초기화. 화면 안에서 토글 가능, 회전 시 유지.
     var selectedAlgorithms by rememberSaveable(stateSaver = AlgorithmSetSaver) {
-        mutableStateOf(setOf(algorithmType))
+        mutableStateOf(initialAlgorithms)
     }
 
     Column(
