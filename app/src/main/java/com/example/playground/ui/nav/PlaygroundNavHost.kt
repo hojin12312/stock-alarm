@@ -1,5 +1,6 @@
 package com.example.playground.ui.nav
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,11 +39,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.playground.data.model.AlgorithmType
+import com.example.playground.data.model.MarketIndex
 import com.example.playground.di.ServiceLocator
 import com.example.playground.ui.chart.ChartScreen
 import com.example.playground.ui.chart.ChartViewModel
 import com.example.playground.ui.dashboard.DashboardScreen
 import com.example.playground.ui.dashboard.DashboardViewModel
+import com.example.playground.ui.market.MarketScreen
+import com.example.playground.ui.market.MarketViewModel
 import com.example.playground.ui.notification.NotificationSheetContent
 import com.example.playground.ui.notification.NotificationViewModel
 import com.example.playground.ui.search.SearchScreen
@@ -58,9 +62,18 @@ object NavRoutes {
     const val CHART_PREFIX = "chart"
     const val CHART_ARG_SYMBOL = "symbol"
     const val CHART_ARG_ALGOS = "algos"
+    const val CHART_ARG_NAME = "name"
+
     fun chartFor(symbol: String, algos: Set<AlgorithmType> = setOf(AlgorithmType.MA_CROSS)): String =
         "$CHART_PREFIX/$symbol?$CHART_ARG_ALGOS=${algos.joinToString(",") { it.name }}"
-    const val CHART_PATTERN = "$CHART_PREFIX/{symbol}?$CHART_ARG_ALGOS={algos}"
+
+    fun chartForIndex(index: MarketIndex): String {
+        val encodedSymbol = Uri.encode(index.symbol)
+        val encodedName = Uri.encode(index.displayName)
+        return "$CHART_PREFIX/$encodedSymbol?$CHART_ARG_ALGOS=${AlgorithmType.MA_CROSS.name}&$CHART_ARG_NAME=$encodedName"
+    }
+
+    const val CHART_PATTERN = "$CHART_PREFIX/{symbol}?$CHART_ARG_ALGOS={algos}&$CHART_ARG_NAME={name}"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,6 +164,16 @@ fun PlaygroundApp() {
                         val vm: SearchViewModel = viewModel(factory = SearchViewModel.Factory(repo))
                         SearchScreen(viewModel = vm, contentPadding = innerPadding)
                     }
+                    composable(Destination.Market.route) {
+                        val vm: MarketViewModel = viewModel(factory = MarketViewModel.Factory(repo))
+                        MarketScreen(
+                            viewModel = vm,
+                            contentPadding = innerPadding,
+                            onIndexClick = { index ->
+                                navController.navigate(NavRoutes.chartForIndex(index))
+                            },
+                        )
+                    }
                     composable(Destination.Watchlist.route) {
                         val vm: WatchlistViewModel = viewModel(
                             factory = WatchlistViewModel.Factory(repo),
@@ -190,17 +213,23 @@ fun PlaygroundApp() {
                                 type = NavType.StringType
                                 defaultValue = AlgorithmType.MA_CROSS.name
                             },
+                            navArgument(NavRoutes.CHART_ARG_NAME) {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
                         ),
                     ) { backStackEntry ->
                         val symbol = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_SYMBOL).orEmpty()
                         val algosStr = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_ALGOS) ?: ""
+                        val displayName = backStackEntry.arguments?.getString(NavRoutes.CHART_ARG_NAME)
                         val algos = algosStr.split(",")
                             .mapNotNull { runCatching { AlgorithmType.valueOf(it.trim()) }.getOrNull() }
                             .toSet()
                             .ifEmpty { setOf(AlgorithmType.MA_CROSS) }
                         val settings = ServiceLocator.provideAppSettings(context)
                         val vm: ChartViewModel = viewModel(
-                            factory = ChartViewModel.Factory(repo, settings, symbol),
+                            factory = ChartViewModel.Factory(repo, settings, symbol, displayName),
                         )
                         ChartScreen(
                             viewModel = vm,

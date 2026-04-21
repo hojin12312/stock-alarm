@@ -1,6 +1,6 @@
 {
-  "versionCode": 22,
-  "versionName": "0.5.3",
+  "versionCode": 23,
+  "versionName": "0.5.4",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.5.3 — 차트 범위와 신호 계산 분리. 항상 5y 데이터로 RSI/SMA200 계산 후, 선택한 기간(1mo~5y)은 표시 윈도우만 조정. 단기 범위에서도 RSI 타임라인 바 정상 표시. range 전환 시 네트워크 재요청 없이 즉각 반응."
+  "notes": "v0.5.4 — 지수/시장 탭 추가. 코스피·코스닥·나스닥·다우존스·S&P 500·금 선물·USD/KRW 실시간 현재가 + 등락률 카드 표시. 카드 탭 시 기존 차트 화면(MA/RSI 알고리즘)으로 진입."
 }

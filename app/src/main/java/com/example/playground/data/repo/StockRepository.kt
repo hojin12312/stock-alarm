@@ -92,6 +92,16 @@ class StockRepository(
         )
     }.onFailure { Log.w(TAG, "fetchChart($symbol) failed", it) }
 
+    suspend fun fetchChartDirect(symbol: String, name: String, range: String = "5y"): Result<ChartData> = runCatching {
+        searchSource.fetchChart(
+            symbol = symbol,
+            market = Market.US,
+            exchangeHint = null,
+            name = name,
+            range = range,
+        )
+    }.onFailure { Log.w(TAG, "fetchChartDirect($symbol) failed", it) }
+
     suspend fun refreshSnapshot(symbol: String): RefreshOutcome = runCatching {
         val entity = dao.getAll().firstOrNull { it.symbol == symbol }
             ?: return@runCatching RefreshOutcome.Skipped("not in watchlist")

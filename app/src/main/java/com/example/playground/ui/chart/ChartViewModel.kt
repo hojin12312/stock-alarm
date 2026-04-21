@@ -22,6 +22,7 @@ class ChartViewModel(
     private val repo: StockRepository,
     private val settings: AppSettings,
     private val symbol: String,
+    private val displayName: String? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChartUiState(loading = true))
@@ -57,7 +58,8 @@ class ChartViewModel(
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
             // 항상 5y를 fetch — RSI/SMA200 계산에 충분한 과거 데이터 확보
-            val result = repo.fetchChart(symbol, "5y")
+            val result = if (displayName != null) repo.fetchChartDirect(symbol, displayName, "5y")
+                         else repo.fetchChart(symbol, "5y")
             _state.value = if (result.isSuccess) {
                 val data = result.getOrNull()!!
                 fullData = data
@@ -92,9 +94,10 @@ class ChartViewModel(
         private val repo: StockRepository,
         private val settings: AppSettings,
         private val symbol: String,
+        private val displayName: String? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ChartViewModel(repo, settings, symbol) as T
+            ChartViewModel(repo, settings, symbol, displayName) as T
     }
 }
