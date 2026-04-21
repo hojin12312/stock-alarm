@@ -62,4 +62,21 @@ object ChartSignals {
         }
         return out
     }
+
+    /** RSI 전략 SELL 시그널 발생 인덱스들: close > sma200 AND rsi2 > 70. */
+    fun rsiSellIndices(
+        closes: List<Double>,
+        sma200: List<Double?>,
+        rsi2: List<Double?>,
+    ): List<Int> {
+        val n = minOf(closes.size, sma200.size, rsi2.size)
+        val out = mutableListOf<Int>()
+        for (i in 0 until n) {
+            val c = closes[i]
+            val s = sma200[i] ?: continue
+            val r = rsi2[i] ?: continue
+            if (c > s && r > 70.0) out.add(i)
+        }
+        return out
+    }
 }

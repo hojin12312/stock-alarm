@@ -6,7 +6,7 @@ data class QuantSnapshot(
     val rsi2: Double,
     val sma200: Double,
     val sma5: Double,
-    val status: MaStatus,
+    val status: MaStatus?,
 )
 
 object QuantCalculator {
@@ -14,7 +14,8 @@ object QuantCalculator {
     /**
      * RSI(2) + SMA(200) 전략.
      * 매수: 종가 > SMA(200) AND RSI(2) < 10
-     * 매도: 그 외 (= 매수 조건 미충족)
+     * 매도: 종가 > SMA(200) AND RSI(2) > 70
+     * 중립: 그 외 (null)
      * 최소 201개 종가 필요 (SMA 200 + 변화량 1).
      */
     fun compute(closes: List<Double>): QuantSnapshot? {
@@ -25,7 +26,11 @@ object QuantCalculator {
         val rsi2 = rsi(closes, 2) ?: return null
         val lastClose = closes.last()
 
-        val status = if (lastClose > sma200 && rsi2 < 10) MaStatus.BUY else MaStatus.SELL
+        val status = when {
+            lastClose > sma200 && rsi2 < 10.0 -> MaStatus.BUY
+            lastClose > sma200 && rsi2 > 70.0 -> MaStatus.SELL
+            else -> null
+        }
 
         return QuantSnapshot(rsi2 = rsi2, sma200 = sma200, sma5 = sma5, status = status)
     }

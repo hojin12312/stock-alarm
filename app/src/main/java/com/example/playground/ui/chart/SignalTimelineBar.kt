@@ -61,11 +61,15 @@ internal fun MaSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier)
 @Composable
 internal fun RsiSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier) {
     val buy = buyColor
+    val sell = sellColor
     val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
     // SMA(200) 계산에 200일 데이터가 필요. 범위가 짧으면 전부 null → 신호 없음.
     val hasEnoughData = data.sma200Series.any { it != null }
-    val signalIndices = if (hasEnoughData) {
+    val buyIndices = if (hasEnoughData) {
         ChartSignals.rsiBuyIndices(data.closes, data.sma200Series, data.rsi2Series)
+    } else emptyList()
+    val sellIndices = if (hasEnoughData) {
+        ChartSignals.rsiSellIndices(data.closes, data.sma200Series, data.rsi2Series)
     } else emptyList()
     TimelineBarBox(label = "RSI", modifier = modifier) {
         if (!hasEnoughData) {
@@ -89,10 +93,18 @@ internal fun RsiSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier
                 drawRect(color = trackColor, size = Size(w, h))
                 val n = data.closes.size.takeIf { it > 0 } ?: return@Canvas
                 val barWidth = (w / n).coerceAtLeast(2f)
-                signalIndices.forEach { i ->
+                buyIndices.forEach { i ->
                     val x = w * i / n.toFloat()
                     drawRect(
                         color = buy,
+                        topLeft = Offset(x, 0f),
+                        size = Size(barWidth, h),
+                    )
+                }
+                sellIndices.forEach { i ->
+                    val x = w * i / n.toFloat()
+                    drawRect(
+                        color = sell,
                         topLeft = Offset(x, 0f),
                         size = Size(barWidth, h),
                     )

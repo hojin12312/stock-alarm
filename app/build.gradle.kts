@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.playground"
         minSdk = 26
         targetSdk = 34
-        versionCode = 20
-        versionName = "0.5.1"
+        versionCode = 21
+        versionName = "0.5.2"
     }
 
     buildFeatures {

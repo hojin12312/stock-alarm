@@ -1,6 +1,6 @@
 {
-  "versionCode": 20,
-  "versionName": "0.5.1",
+  "versionCode": 21,
+  "versionName": "0.5.2",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.5.1 — RSI 전략은 매수 신호만 있는 알고리즘임을 범례에 명시. RSI만 단독 선택 시 범례에 '매도 구간' 대신 'RSI 매수 신호'로 표시. MA 포함 선택 시엔 기존 '매수 구간 / 매도 구간' 유지."
+  "notes": "v0.5.2 — RSI(2)+SMA(200) 전략 매도 조건 정확히 구현. 매수: close>SMA200 && RSI(2)<10, 매도: close>SMA200 && RSI(2)>70, 중립: 그 외(대기). RSI 타임라인 바에 빨간 매도 신호 추가. 범례 '매수 신호 / 매도 신호'로 통일."
 }

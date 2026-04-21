@@ -228,12 +228,13 @@ private fun LegendRow(selected: Set<AlgorithmType>) {
                 LegendItem(color = sellColor, label = "매도 구간")
             }
         }
-        if (selected == setOf(AlgorithmType.RSI_SMA200)) {
+        if (AlgorithmType.RSI_SMA200 in selected) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                LegendItem(color = buyColor, label = "RSI 매수 신호")
+                LegendItem(color = buyColor, label = "매수 신호")
+                LegendItem(color = sellColor, label = "매도 신호")
             }
         }
     }
