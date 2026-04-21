@@ -7,7 +7,11 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 ## 현재 상태 (2026-04-21 기준)
 
-- **버전**: `v0.4.9` (versionCode 18)
+- **버전**: `v0.5.0` (versionCode 19)
+- **v0.5.0 차트 버그 수정 3종**:
+  - **차트 진입 알고리즘 초기화**: `NavRoutes.chartFor()` → `Set<AlgorithmType>` 인자로 변경. Dashboard의 `selectedAlgorithms`를 comma-separated route param으로 그대로 전달. MA+RSI 둘 다 선택 후 카드 클릭 시 차트도 둘 다 선택된 상태로 진입 (기존: 2개면 MA로 강제 초기화).
+  - **RSI 타임라인 바 회색**: `sma200Series.any { it != null }` 로 데이터 충분 여부 체크. 부족 시(3mo 이하 range) "SMA(200) 계산에 1y 이상 필요" 안내 문구 표시.
+  - **차트/타임라인 x축 불일치**: `TimelineBarRow` (Row 구조) → `TimelineBarBox` (Box 오버레이) 변경. label(MA/RSI 텍스트)이 Canvas 위에 오버레이되어 Canvas 폭이 차트와 동일해짐 (기존 36dp 차이 해소).
 - **v0.4.9 차트 알고리즘 토글 + 타임라인 바 UI**:
   - `ChartScreen` 에 `selectedAlgorithms: Set<AlgorithmType>` rememberSaveable state 추가 (초기값은 nav 파라미터 하나, `AlgorithmSetSaver` 로 회전 시 유지). 차트 내에서 MA/RSI 각각 토글, 최소 1개 강제.
   - 과거 매수/매도 구간 표시 방식 변경: 차트 본체 배경 음영 + ▲/▼ 마커 + RSI 점 마커 **전부 제거**. 대신 차트 Card 아래에 알고리즘별 한 줄짜리 타임라인 바 (`ui/chart/SignalTimelineBar.kt`). `MaSignalTimelineBar` 는 BUY/SELL 색띠, `RsiSignalTimelineBar` 는 시그널일마다 녹색 세로 바. 두 알고리즘 선택 시 나란히 두 줄 (캘린더 다중 일정 비유).
