@@ -7,8 +7,10 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 ## 현재 상태 (2026-04-21 기준)
 
-- **버전**: `v0.5.1` (versionCode 20)
-- **v0.5.1 RSI 범례 개선 (임시)**: RSI만 선택 시 범례 "매도 구간" → "RSI 매수 신호"로 분기. **다음 세션에서 RSI 매도 조건 조사 후 교체 예정** (`CONTINUE.md` 참조).
+- **버전**: `v0.5.3` (versionCode 22)
+- **v0.5.3 차트 범위·신호 계산 분리**: 항상 5y 데이터를 fetch해 RSI/SMA200 전체 계산 후, 선택한 range(1mo~5y)는 표시 윈도우(`displayCount`)만 조정. 단기 범위에서도 RSI 타임라인 바 정상 표시. range 전환 시 캐시된 데이터 재사용 → 네트워크 재요청 없이 즉각 반응. `ChartData.displayCount` + `display*` 슬라이스 프로퍼티 추가. `ChartViewModel.fullData` 캐시 + `calcDisplayCount()` 추가 (초 단위 epoch 기준).
+- **v0.5.2 RSI 전략 매도 조건 구현**: `QuantSnapshot.status: MaStatus?` (null=중립). `QuantCalculator.compute()` BUY(`RSI<10`) / SELL(`RSI>70`) / null(그 외) 3상태. `ChartSignals.rsiSellIndices()` 추가. RSI 타임라인 바에 빨간 매도 신호 추가. 범례 "매수 신호 / 매도 신호"로 통일.
+- **v0.5.1 RSI 범례 개선**: RSI만 선택 시 범례 "매도 구간" → "RSI 매수 신호"로 분기. (v0.5.2에서 정식 교체됨)
 - **v0.5.0 차트 버그 수정 3종**:
   - **차트 진입 알고리즘 초기화**: `NavRoutes.chartFor()` → `Set<AlgorithmType>` 인자로 변경. Dashboard의 `selectedAlgorithms`를 comma-separated route param으로 그대로 전달. MA+RSI 둘 다 선택 후 카드 클릭 시 차트도 둘 다 선택된 상태로 진입 (기존: 2개면 MA로 강제 초기화).
   - **RSI 타임라인 바 회색**: `sma200Series.any { it != null }` 로 데이터 충분 여부 체크. 부족 시(3mo 이하 range) "SMA(200) 계산에 1y 이상 필요" 안내 문구 표시.
