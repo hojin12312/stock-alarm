@@ -7,7 +7,12 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 ## 현재 상태 (2026-04-21 기준)
 
-- **버전**: `v0.4.8` (versionCode 17)
+- **버전**: `v0.4.9` (versionCode 18)
+- **v0.4.9 차트 알고리즘 토글 + 타임라인 바 UI**:
+  - `ChartScreen` 에 `selectedAlgorithms: Set<AlgorithmType>` rememberSaveable state 추가 (초기값은 nav 파라미터 하나, `AlgorithmSetSaver` 로 회전 시 유지). 차트 내에서 MA/RSI 각각 토글, 최소 1개 강제.
+  - 과거 매수/매도 구간 표시 방식 변경: 차트 본체 배경 음영 + ▲/▼ 마커 + RSI 점 마커 **전부 제거**. 대신 차트 Card 아래에 알고리즘별 한 줄짜리 타임라인 바 (`ui/chart/SignalTimelineBar.kt`). `MaSignalTimelineBar` 는 BUY/SELL 색띠, `RsiSignalTimelineBar` 는 시그널일마다 녹색 세로 바. 두 알고리즘 선택 시 나란히 두 줄 (캘린더 다중 일정 비유).
+  - `StatusHeader` 는 선택된 알고리즘에 맞춰 조건부 표시. 둘 다 선택 시 `MA [뱃지]` / `RSI [뱃지]` 각각 라벨 달아 세로 나열.
+  - `LineChartCanvas` 는 다시 가격/5MA/20MA 라인만 그리는 원래 형태로 복원.
 - **v0.4.8 장외 알림 차단 + 필터 상태 유지 + 차트 과거 신호 오버레이**:
   - **장외 알림 차단**: `data/model/MarketHours.kt::Market.isOpenNow()` 추가. KR 은 평일 KST 09:00-15:30, US 는 평일 ET 09:30-16:00 만 `true`. `MaCrossoverWorker` 와 `DashboardViewModel.refreshNow` 양쪽에서 `notifier.notify*` 호출 직전에 게이팅. DB 상태는 그대로 갱신되므로 개장 직후 첫 워커가 밀린 교차를 정상 감지. 휴장일은 반영 X, DST 는 `ZoneId.of("America/New_York")` 가 자동 처리. **과거 "장 시각 게이팅 도입 안 함" 결정 역전 — 새벽 알림 재현 케이스 대응**.
   - **알고리즘 필터 리셋 버그**: `DashboardViewModel.toggleAlgorithm()` 이 알고리즘 토글마다 `statusFilter = null` 을 덮어써서 매수/매도 선택이 "전체"로 돌아가던 문제. 해당 라인 제거만으로 해결.

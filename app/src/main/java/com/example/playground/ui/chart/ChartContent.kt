@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.playground.data.model.AlgorithmType
 import com.example.playground.data.model.ChartData
+import com.example.playground.data.model.MaStatus
 import com.example.playground.domain.resolveDisplayStatus
 import com.example.playground.ui.common.StatusBadge
 import com.example.playground.util.formatDateYmd
@@ -33,7 +34,8 @@ import com.example.playground.util.formatNumber
 @Composable
 internal fun ChartContent(
     data: ChartData,
-    algorithmType: AlgorithmType,
+    selectedAlgorithms: Set<AlgorithmType>,
+    onToggleAlgorithm: (AlgorithmType) -> Unit,
     range: String,
     onRangeSelect: (String) -> Unit,
 ) {
@@ -44,9 +46,13 @@ internal fun ChartContent(
     ) {
         Spacer(Modifier.height(8.dp))
 
-        StatusHeader(data, algorithmType)
+        StatusHeader(data, selectedAlgorithms)
 
         Spacer(Modifier.height(12.dp))
+
+        AlgorithmChecklist(selectedAlgorithms, onToggleAlgorithm)
+
+        Spacer(Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("1mo", "3mo", "6mo", "1y", "2y", "5y").forEach { r ->
@@ -69,13 +75,25 @@ internal fun ChartContent(
             ),
         ) {
             Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-                LineChartCanvas(data, algorithmType)
+                LineChartCanvas(data)
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // 차트 x축에 정렬되도록 좌우 패딩을 Card 내부와 동일하게.
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            if (AlgorithmType.MA_CROSS in selectedAlgorithms) {
+                MaSignalTimelineBar(data)
+            }
+            if (AlgorithmType.RSI_SMA200 in selectedAlgorithms) {
+                RsiSignalTimelineBar(data)
             }
         }
 
         Spacer(Modifier.height(12.dp))
 
-        LegendRow(algorithmType)
+        LegendRow(selectedAlgorithms)
 
         Spacer(Modifier.height(8.dp))
 
@@ -92,7 +110,26 @@ internal fun ChartContent(
 }
 
 @Composable
-private fun StatusHeader(data: ChartData, algorithmType: AlgorithmType) {
+private fun AlgorithmChecklist(
+    selected: Set<AlgorithmType>,
+    onToggle: (AlgorithmType) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(
+            selected = AlgorithmType.MA_CROSS in selected,
+            onClick = { onToggle(AlgorithmType.MA_CROSS) },
+            label = { Text("MA 교차") },
+        )
+        FilterChip(
+            selected = AlgorithmType.RSI_SMA200 in selected,
+            onClick = { onToggle(AlgorithmType.RSI_SMA200) },
+            label = { Text("RSI 전략") },
+        )
+    }
+}
+
+@Composable
+private fun StatusHeader(data: ChartData, selected: Set<AlgorithmType>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -116,33 +153,63 @@ private fun StatusHeader(data: ChartData, algorithmType: AlgorithmType) {
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Spacer(Modifier.height(4.dp))
-                when (algorithmType) {
-                    AlgorithmType.MA_CROSS -> {
-                        val ma5 = data.lastMa5?.let { formatNumber(it) } ?: "-"
-                        val ma20 = data.lastMa20?.let { formatNumber(it) } ?: "-"
-                        Text(
-                            text = "5MA $ma5  ·  20MA $ma20",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                    AlgorithmType.RSI_SMA200 -> {
-                        val quant = data.quantSnapshot
-                        val rsi = quant?.rsi2?.let { formatDecimal1(it) } ?: "-"
-                        val sma200 = quant?.sma200?.let { formatNumber(it) } ?: "-"
-                        Text(
-                            text = "RSI(2) $rsi  ·  SMA200 $sma200",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
+                if (AlgorithmType.MA_CROSS in selected) {
+                    val ma5 = data.lastMa5?.let { formatNumber(it) } ?: "-"
+                    val ma20 = data.lastMa20?.let { formatNumber(it) } ?: "-"
+                    Text(
+                        text = "5MA $ma5  ·  20MA $ma20",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                if (AlgorithmType.RSI_SMA200 in selected) {
+                    val quant = data.quantSnapshot
+                    val rsi = quant?.rsi2?.let { formatDecimal1(it) } ?: "-"
+                    val sma200 = quant?.sma200?.let { formatNumber(it) } ?: "-"
+                    Text(
+                        text = "RSI(2) $rsi  ·  SMA200 $sma200",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             }
-            StatusBadge(resolveDisplayStatus(algorithmType, data.maStatus, data.quantSnapshot?.status))
+            StatusColumn(data, selected)
         }
     }
 }
 
 @Composable
-private fun LegendRow(algorithmType: AlgorithmType) {
+private fun StatusColumn(data: ChartData, selected: Set<AlgorithmType>) {
+    // 단일 선택이면 뱃지 하나, 둘 다면 라벨 달고 두 개 세로 나열
+    val showMa = AlgorithmType.MA_CROSS in selected
+    val showRsi = AlgorithmType.RSI_SMA200 in selected
+    val ma = data.maStatus
+    val rsi = data.quantSnapshot?.status
+    when {
+        showMa && showRsi -> Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            LabeledBadge(label = "MA", status = ma)
+            LabeledBadge(label = "RSI", status = rsi)
+        }
+        showMa -> StatusBadge(resolveDisplayStatus(AlgorithmType.MA_CROSS, ma, rsi))
+        showRsi -> StatusBadge(resolveDisplayStatus(AlgorithmType.RSI_SMA200, ma, rsi))
+    }
+}
+
+@Composable
+private fun LabeledBadge(label: String, status: MaStatus?) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        StatusBadge(status)
+    }
+}
+
+@Composable
+private fun LegendRow(selected: Set<AlgorithmType>) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -152,21 +219,13 @@ private fun LegendRow(algorithmType: AlgorithmType) {
             LegendItem(color = ma5LineColor, label = "5MA")
             LegendItem(color = ma20LineColor, label = "20MA (점선)")
         }
-        when (algorithmType) {
-            AlgorithmType.MA_CROSS -> Row(
+        if (selected.isNotEmpty()) {
+            Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                LegendItem(color = buyColor.copy(alpha = 0.3f), label = "매수 구간")
-                LegendItem(color = sellColor.copy(alpha = 0.3f), label = "매도 구간")
-                Text("▲ 골든", style = MaterialTheme.typography.bodySmall, color = buyColor)
-                Text("▼ 데드", style = MaterialTheme.typography.bodySmall, color = sellColor)
-            }
-            AlgorithmType.RSI_SMA200 -> Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text("● 매수 시그널", style = MaterialTheme.typography.bodySmall, color = buyColor)
+                LegendItem(color = buyColor, label = "매수 구간")
+                LegendItem(color = sellColor, label = "매도 구간")
             }
         }
     }

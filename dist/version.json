@@ -1,6 +1,6 @@
 {
-  "versionCode": 17,
-  "versionName": "0.4.8",
+  "versionCode": 18,
+  "versionName": "0.4.9",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.4.8 — 장외 시간 알림 차단(한국/미국 정규장 시간에만 푸시), 필터 체크리스트에서 알고리즘 토글 시 매수/매도 선택 유지, 차트 상세에 과거 매수/매도 구간 + 전환 마커(MA) / 매수 시그널 점(RSI) 오버레이 추가."
+  "notes": "v0.4.9 — 차트 상세에서 MA/RSI 전략을 각각 켜고 끌 수 있는 토글 추가. 매수/매도 구간은 차트 본체 대신 아래쪽에 알고리즘별 한 줄짜리 '일정 바'로 표시(MA/RSI 모두 켜면 두 줄 나란히). 무슨 전략의 구간인지 한눈에 구분돼."
 }

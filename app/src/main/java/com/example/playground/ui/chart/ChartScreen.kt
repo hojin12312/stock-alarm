@@ -16,6 +16,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +35,10 @@ fun ChartScreen(
     onBack: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // 초기값은 진입 시 전달된 알고리즘. 화면 안에서 토글 가능, 회전 시 유지.
+    var selectedAlgorithms by rememberSaveable(stateSaver = AlgorithmSetSaver) {
+        mutableStateOf(setOf(algorithmType))
+    }
 
     Column(
         modifier = Modifier
@@ -74,7 +83,15 @@ fun ChartScreen(
             state.data != null -> {
                 ChartContent(
                     data = state.data!!,
-                    algorithmType = algorithmType,
+                    selectedAlgorithms = selectedAlgorithms,
+                    onToggleAlgorithm = { type ->
+                        val next = if (type in selectedAlgorithms) {
+                            selectedAlgorithms - type
+                        } else {
+                            selectedAlgorithms + type
+                        }
+                        if (next.isNotEmpty()) selectedAlgorithms = next
+                    },
                     range = state.range,
                     onRangeSelect = viewModel::selectRange,
                 )
@@ -82,3 +99,8 @@ fun ChartScreen(
         }
     }
 }
+
+private val AlgorithmSetSaver: Saver<Set<AlgorithmType>, List<String>> = Saver(
+    save = { it.map(AlgorithmType::name) },
+    restore = { it.map(AlgorithmType::valueOf).toSet() },
+)
