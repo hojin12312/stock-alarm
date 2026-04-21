@@ -39,10 +39,12 @@ internal fun LineChartCanvas(data: ChartData) {
     val ma5Color = ma5LineColor
     val ma20Color = ma20LineColor
 
-    val closes = data.closes
+    // 표시 윈도우 슬라이스만 렌더링
+    val closes = data.displayCloses
     if (closes.isEmpty()) return
-    // y축 범위 — 종가·5MA·20MA 모두 포함하도록
-    val allValues = closes + data.ma5Series.filterNotNull() + data.ma20Series.filterNotNull()
+    val ma5 = data.displayMa5
+    val ma20 = data.displayMa20
+    val allValues = closes + ma5.filterNotNull() + ma20.filterNotNull()
     val minValue = allValues.min()
     val maxValue = allValues.max()
     val range = (maxValue - minValue).takeIf { it > 0 } ?: 1.0
@@ -83,8 +85,8 @@ internal fun LineChartCanvas(data: ChartData) {
         )
 
         // null 구간은 끊어서 그림
-        drawSeries(data.ma5Series, ma5Color, ::xOf, ::yOf, dashed = false, strokeWidth = 3f)
-        drawSeries(data.ma20Series, ma20Color, ::xOf, ::yOf, dashed = true, strokeWidth = 3f)
+        drawSeries(ma5, ma5Color, ::xOf, ::yOf, dashed = false, strokeWidth = 3f)
+        drawSeries(ma20, ma20Color, ::xOf, ::yOf, dashed = true, strokeWidth = 3f)
     }
 }
 

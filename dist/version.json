@@ -1,6 +1,6 @@
 {
-  "versionCode": 21,
-  "versionName": "0.5.2",
+  "versionCode": 22,
+  "versionName": "0.5.3",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.5.2 — RSI(2)+SMA(200) 전략 매도 조건 정확히 구현. 매수: close>SMA200 && RSI(2)<10, 매도: close>SMA200 && RSI(2)>70, 중립: 그 외(대기). RSI 타임라인 바에 빨간 매도 신호 추가. 범례 '매수 신호 / 매도 신호'로 통일."
+  "notes": "v0.5.3 — 차트 범위와 신호 계산 분리. 항상 5y 데이터로 RSI/SMA200 계산 후, 선택한 기간(1mo~5y)은 표시 윈도우만 조정. 단기 범위에서도 RSI 타임라인 바 정상 표시. range 전환 시 네트워크 재요청 없이 즉각 반응."
 }

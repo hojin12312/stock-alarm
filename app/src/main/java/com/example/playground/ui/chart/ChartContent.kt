@@ -97,11 +97,11 @@ internal fun ChartContent(
 
         Spacer(Modifier.height(8.dp))
 
-        if (data.timestamps.isNotEmpty()) {
-            val first = formatDateYmd(data.timestamps.first())
-            val last = formatDateYmd(data.timestamps.last())
+        if (data.displayTimestamps.isNotEmpty()) {
+            val first = formatDateYmd(data.displayTimestamps.first())
+            val last = formatDateYmd(data.displayTimestamps.last())
             Text(
-                text = "$first ~ $last  ·  데이터 ${data.closes.size}개",
+                text = "$first ~ $last  ·  데이터 ${data.displayCloses.size}개",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

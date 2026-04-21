@@ -24,7 +24,7 @@ internal fun MaSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier)
     val buy = buyColor
     val sell = sellColor
     val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
-    val signal = ChartSignals.maSignalSeries(data.ma5Series, data.ma20Series)
+    val signal = ChartSignals.maSignalSeries(data.displayMa5, data.displayMa20)
     TimelineBarBox(label = "MA", modifier = modifier) {
         Canvas(modifier = Modifier.fillMaxWidth().height(14.dp)) {
             val w = size.width
@@ -63,13 +63,16 @@ internal fun RsiSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier
     val buy = buyColor
     val sell = sellColor
     val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
-    // SMA(200) 계산에 200일 데이터가 필요. 범위가 짧으면 전부 null → 신호 없음.
-    val hasEnoughData = data.sma200Series.any { it != null }
+    // 표시 윈도우 기준으로 신호 계산 (전체 데이터로 계산된 시리즈의 마지막 N개)
+    val displaySma200 = data.displaySma200
+    val hasEnoughData = displaySma200.any { it != null }
+    val displayCloses = data.displayCloses
+    val displayRsi2 = data.displayRsi2
     val buyIndices = if (hasEnoughData) {
-        ChartSignals.rsiBuyIndices(data.closes, data.sma200Series, data.rsi2Series)
+        ChartSignals.rsiBuyIndices(displayCloses, displaySma200, displayRsi2)
     } else emptyList()
     val sellIndices = if (hasEnoughData) {
-        ChartSignals.rsiSellIndices(data.closes, data.sma200Series, data.rsi2Series)
+        ChartSignals.rsiSellIndices(displayCloses, displaySma200, displayRsi2)
     } else emptyList()
     TimelineBarBox(label = "RSI", modifier = modifier) {
         if (!hasEnoughData) {
@@ -91,7 +94,7 @@ internal fun RsiSignalTimelineBar(data: ChartData, modifier: Modifier = Modifier
                 val w = size.width
                 val h = size.height
                 drawRect(color = trackColor, size = Size(w, h))
-                val n = data.closes.size.takeIf { it > 0 } ?: return@Canvas
+                val n = displayCloses.size.takeIf { it > 0 } ?: return@Canvas
                 val barWidth = (w / n).coerceAtLeast(2f)
                 buyIndices.forEach { i ->
                     val x = w * i / n.toFloat()
