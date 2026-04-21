@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.example.playground.data.model.isOpenNow
 import com.example.playground.di.ServiceLocator
 
 class MaCrossoverWorker(
@@ -18,7 +19,17 @@ class MaCrossoverWorker(
 
         val updates = repo.refreshAll()
         var crossed = 0
+        var skipped = 0
         updates.forEach { update ->
+            // 장 시간 외에는 상태는 DB에 갱신되지만 알림은 발송하지 않음.
+            // 이유: 장외에 워커가 깨면서 어제 장중에 발생한 교차를 뒤늦게 감지해 새벽에 알림이 울리는 문제를 방지.
+            val marketOpen = update.market.isOpenNow()
+            val hasSignal = update.crossed || (update.quantCrossed && update.quantSnapshot != null)
+            if (hasSignal && !marketOpen) {
+                skipped++
+                Log.d(TAG, "skip notify — ${update.symbol} ${update.market} closed")
+                return@forEach
+            }
             if (update.crossed) {
                 crossed++
                 notifier.notifyCrossover(
@@ -44,7 +55,7 @@ class MaCrossoverWorker(
                 )
             }
         }
-        Log.i(TAG, "MaCrossoverWorker done — total=${updates.size}, crossed=$crossed")
+        Log.i(TAG, "MaCrossoverWorker done — total=${updates.size}, crossed=$crossed, skipped=$skipped")
         return Result.success()
     }
 

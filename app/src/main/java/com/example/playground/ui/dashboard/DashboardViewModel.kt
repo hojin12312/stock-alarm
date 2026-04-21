@@ -7,6 +7,7 @@ import com.example.playground.data.model.AlgorithmType
 import com.example.playground.data.model.MaStatus
 import com.example.playground.data.model.Market
 import com.example.playground.data.model.WatchedStock
+import com.example.playground.data.model.isOpenNow
 import com.example.playground.data.repo.StockRepository
 import com.example.playground.notification.Notifier
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,7 +75,7 @@ class DashboardViewModel(
         val current = _state.value.selectedAlgorithms
         val new = if (type in current) current - type else current + type
         if (new.isEmpty()) return
-        _state.value = _state.value.copy(selectedAlgorithms = new, statusFilter = null)
+        _state.value = _state.value.copy(selectedAlgorithms = new)
     }
 
     fun setStatusFilter(filter: MaStatus?) {
@@ -95,6 +96,10 @@ class DashboardViewModel(
         viewModelScope.launch {
             val updates = repo.refreshAll()
             updates.forEach { update ->
+                // 장외엔 알림 스킵 (MaCrossoverWorker 와 동일 정책)
+                val marketOpen = update.market.isOpenNow()
+                val hasSignal = update.crossed || (update.quantCrossed && update.quantSnapshot != null)
+                if (hasSignal && !marketOpen) return@forEach
                 if (update.crossed) {
                     notifier.notifyCrossover(
                         symbol = update.symbol,

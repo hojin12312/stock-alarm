@@ -40,4 +40,42 @@ object QuantCalculator {
         val rs = avgGain / avgLoss
         return 100.0 - (100.0 / (1.0 + rs))
     }
+
+    /** i 번째 값 = [0..i] 종가 기반 단순 RSI(period). 데이터 부족 시 null. */
+    fun rsiSeries(closes: List<Double>, period: Int = 2): List<Double?> {
+        if (closes.isEmpty()) return emptyList()
+        val result = ArrayList<Double?>(closes.size)
+        // changes[i] = closes[i] - closes[i-1], changes[0] 은 없음
+        val changes = DoubleArray(closes.size) { if (it == 0) 0.0 else closes[it] - closes[it - 1] }
+        for (i in closes.indices) {
+            // 최소 period 개의 변화량 필요 → i >= period
+            if (i < period) {
+                result.add(null)
+                continue
+            }
+            var gain = 0.0
+            var loss = 0.0
+            for (k in (i - period + 1)..i) {
+                val c = changes[k]
+                if (c > 0) gain += c else if (c < 0) loss += -c
+            }
+            val avgGain = gain / period
+            val avgLoss = loss / period
+            result.add(if (avgLoss == 0.0) 100.0 else 100.0 - (100.0 / (1.0 + avgGain / avgLoss)))
+        }
+        return result
+    }
+
+    /** i 번째 값 = [i-period+1..i] 평균. 데이터 부족 구간은 null. */
+    fun smaSeries(closes: List<Double>, period: Int): List<Double?> {
+        if (closes.isEmpty() || period <= 0) return emptyList()
+        val result = ArrayList<Double?>(closes.size)
+        var sum = 0.0
+        for (i in closes.indices) {
+            sum += closes[i]
+            if (i >= period) sum -= closes[i - period]
+            result.add(if (i >= period - 1) sum / period else null)
+        }
+        return result
+    }
 }

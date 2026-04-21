@@ -5,9 +5,13 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 **현재 들어 있는 앱**: 주식 알리미 (Stock Alarm) — 한·미 주식 검색 + 관심목록 + 5/20MA 교차 알림 + 차트 디테일.
 
-## 현재 상태 (2026-04-20 기준)
+## 현재 상태 (2026-04-21 기준)
 
-- **버전**: `v0.4.7` (versionCode 16)
+- **버전**: `v0.4.8` (versionCode 17)
+- **v0.4.8 장외 알림 차단 + 필터 상태 유지 + 차트 과거 신호 오버레이**:
+  - **장외 알림 차단**: `data/model/MarketHours.kt::Market.isOpenNow()` 추가. KR 은 평일 KST 09:00-15:30, US 는 평일 ET 09:30-16:00 만 `true`. `MaCrossoverWorker` 와 `DashboardViewModel.refreshNow` 양쪽에서 `notifier.notify*` 호출 직전에 게이팅. DB 상태는 그대로 갱신되므로 개장 직후 첫 워커가 밀린 교차를 정상 감지. 휴장일은 반영 X, DST 는 `ZoneId.of("America/New_York")` 가 자동 처리. **과거 "장 시각 게이팅 도입 안 함" 결정 역전 — 새벽 알림 재현 케이스 대응**.
+  - **알고리즘 필터 리셋 버그**: `DashboardViewModel.toggleAlgorithm()` 이 알고리즘 토글마다 `statusFilter = null` 을 덮어써서 매수/매도 선택이 "전체"로 돌아가던 문제. 해당 라인 제거만으로 해결.
+  - **차트 과거 신호 오버레이**: `QuantCalculator.rsiSeries`/`smaSeries` 신규 (각 i 에 대한 RSI(2)/SMA(200) 시계열), `ChartData.rsi2Series`/`sma200Series` lazy 파생, `domain/ChartSignals.kt` 에 MA 신호 구간/전환점 + RSI BUY 인덱스 추출. `LineChartCanvas` 에 `algorithmType` 받아 오버레이: **MA 교차** → BUY/SELL 구간 배경 음영(`buy/sell.copy(alpha=0.1)`) + ▲ 골든 / ▼ 데드 삼각형 마커. **RSI 전략** → `close>SMA200 && RSI2<10` 만족한 날짜에 녹색 점 마커. 데이터 부족 구간(첫 200일)은 마커 없음. 범례 `LegendRow(algorithmType)` 로 동적화.
 - **v0.4.7 GitHub Releases 도입 + 업데이트 다이얼로그 히스토리 링크**:
   - `UpdateDialog.kt` — "📜 전체 업데이트 히스토리 보기" 텍스트 링크 추가. `Intent.ACTION_VIEW`로 외부 웹 브라우저에서 `github.com/hojin12312/stock-alarm/releases` 오픈. 긴 notes 대비 `heightIn(max=360.dp)` + `verticalScroll` 적용.
   - 이번 버전부터 `gh release create`로 정식 GitHub Release 등록 (태그 `v0.4.7`, APK 자산 첨부). 첫 릴리스 노트 끝에 "이전 버전(v0.4.6 이하) 변경 이력 → `docs/RELEASE.md` 버전 히스토리 표" 링크 포함.
@@ -36,7 +40,7 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 - **자동 업데이트**: 앱 시작 시 `dist/version.json`을 raw URL로 폴링 → 더 큰 versionCode 발견 시 다이얼로그 → DownloadManager로 APK 다운로드 → 시스템 설치 화면. 릴리스마다 `dist/version.json`도 같이 갱신해야 함 (`docs/RELEASE.md` 5단계 참고).
 - **루루 최종 확정 사항**:
   - 매수/매도 라벨은 `5MA<20MA=매수` (문서 정의 그대로)
-  - WorkManager 15분 주기, 장 시각 게이팅은 도입 안 함 (리소스 영향 미미)
+  - WorkManager 15분 주기. 장 시각 게이팅은 v0.4.8 부터 도입 (알림만 스킵, DB 갱신은 그대로 — 새벽 알림 재현 후 결정 역전)
   - `versionCode` 매 릴리스마다 증가, `./gradlew installDebug`로 관심목록 유지 업데이트
   - 미래에셋증권은 모바일 앱용 REST Open API를 공개하지 않아 KIS로 대체
 

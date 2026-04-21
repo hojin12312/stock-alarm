@@ -69,13 +69,13 @@ internal fun ChartContent(
             ),
         ) {
             Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-                LineChartCanvas(data)
+                LineChartCanvas(data, algorithmType)
             }
         }
 
         Spacer(Modifier.height(12.dp))
 
-        LegendRow()
+        LegendRow(algorithmType)
 
         Spacer(Modifier.height(8.dp))
 
@@ -142,14 +142,33 @@ private fun StatusHeader(data: ChartData, algorithmType: AlgorithmType) {
 }
 
 @Composable
-private fun LegendRow() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        LegendItem(color = MaterialTheme.colorScheme.primary, label = "종가")
-        LegendItem(color = ma5LineColor, label = "5MA")
-        LegendItem(color = ma20LineColor, label = "20MA (점선)")
+private fun LegendRow(algorithmType: AlgorithmType) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            LegendItem(color = MaterialTheme.colorScheme.primary, label = "종가")
+            LegendItem(color = ma5LineColor, label = "5MA")
+            LegendItem(color = ma20LineColor, label = "20MA (점선)")
+        }
+        when (algorithmType) {
+            AlgorithmType.MA_CROSS -> Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                LegendItem(color = buyColor.copy(alpha = 0.3f), label = "매수 구간")
+                LegendItem(color = sellColor.copy(alpha = 0.3f), label = "매도 구간")
+                Text("▲ 골든", style = MaterialTheme.typography.bodySmall, color = buyColor)
+                Text("▼ 데드", style = MaterialTheme.typography.bodySmall, color = sellColor)
+            }
+            AlgorithmType.RSI_SMA200 -> Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text("● 매수 시그널", style = MaterialTheme.typography.bodySmall, color = buyColor)
+            }
+        }
     }
 }
 

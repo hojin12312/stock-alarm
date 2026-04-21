@@ -24,4 +24,8 @@ data class ChartData(
     val status: MaStatus? get() = maStatus
 
     val quantSnapshot by lazy { QuantCalculator.compute(closes) }
+
+    // RSI(2) / SMA(200) 시계열 — 차트 과거 신호 오버레이용. 데이터 부족 구간은 null.
+    val rsi2Series: List<Double?> by lazy { QuantCalculator.rsiSeries(closes, 2) }
+    val sma200Series: List<Double?> by lazy { QuantCalculator.smaSeries(closes, 200) }
 }
