@@ -219,13 +219,21 @@ private fun LegendRow(selected: Set<AlgorithmType>) {
             LegendItem(color = ma5LineColor, label = "5MA")
             LegendItem(color = ma20LineColor, label = "20MA (점선)")
         }
-        if (selected.isNotEmpty()) {
+        if (AlgorithmType.MA_CROSS in selected) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 LegendItem(color = buyColor, label = "매수 구간")
                 LegendItem(color = sellColor, label = "매도 구간")
+            }
+        }
+        if (selected == setOf(AlgorithmType.RSI_SMA200)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                LegendItem(color = buyColor, label = "RSI 매수 신호")
             }
         }
     }

@@ -1,6 +1,6 @@
 {
-  "versionCode": 19,
-  "versionName": "0.5.0",
+  "versionCode": 20,
+  "versionName": "0.5.1",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.5.0 — 버그 수정 3종: ① 대시보드 필터(MA/RSI/둘다)가 차트 진입 시 그대로 이어지도록 수정(기존엔 항상 MA로 초기화됨). ② RSI 타임라인 바가 SMA(200) 계산에 필요한 데이터가 부족할 때 안내 문구 표시(기본 range 3mo에서는 1y 이상으로 변경 필요). ③ 차트 x축과 타임라인 바 x축 정렬 불일치 수정(기존엔 타임라인이 36dp 밀려 그려지던 문제)."
+  "notes": "v0.5.1 — RSI 전략은 매수 신호만 있는 알고리즘임을 범례에 명시. RSI만 단독 선택 시 범례에 '매도 구간' 대신 'RSI 매수 신호'로 표시. MA 포함 선택 시엔 기존 '매수 구간 / 매도 구간' 유지."
 }
