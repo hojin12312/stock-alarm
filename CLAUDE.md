@@ -7,7 +7,11 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 ## 현재 상태 (2026-04-21 기준)
 
-- **버전**: `v0.5.4` (versionCode 23)
+- **버전**: `v0.5.5` (versionCode 24)
+- **v0.5.5 Pull-to-Refresh + 차트 핀치줌/스크롤**:
+  - **지수 탭 Pull-to-Refresh**: `MarketViewModel`에 `isRefreshing: StateFlow<Boolean>` 추가, `loadAll()` → `jobs.joinAll()` 구조로 완료 감지. `MarketScreen`에 `PullToRefreshContainer` + `nestedScrollConnection` 적용 (Material3 1.2.1 호환 방식).
+  - **차트 핀치줌/드래그 스크롤**: `ChartData`에 `displayOffset: Int` 파라미터 추가, `display*` 슬라이스를 `subList(startIdx, startIdx + displayLen)` 기반으로 변경. `ChartContent`에 `zoomedCount` / `scrollOffset` 로컬 state + `detectTransformGestures` 제스처 처리 추가. range 칩 변경 시 줌·스크롤 초기화 (`LaunchedEffect(data.displayCount)`).
+  - **에뮬레이터 adb swipe 미확인**: 코드 구조는 완성, `adb shell input swipe` 명령으로는 제스처 미반응 확인됨 (실기기에서 정상 동작 예상). 검증 필요.
 - **v0.5.4 지수/시장 탭 추가**: 검색 탭 오른쪽에 **지수** 탭 신설. 코스피·코스닥·나스닥·다우존스·S&P 500·금 선물·USD/KRW 7개 지수를 카드로 표시 (실시간 현재가 + 전일 대비 등락률). 카드 탭 시 기존 `ChartScreen`(MA/RSI 알고리즘 동일 적용)으로 진입. `MarketIndex` enum + `fetchChartDirect()` (관심목록 없이 Yahoo 직접 호출) + `ChartViewModel.displayName` 파라미터로 지수 차트 지원. USD/KRW는 소수점 2자리(`%,.2f`) 적용.
 - **v0.5.3 차트 범위·신호 계산 분리**: 항상 5y 데이터를 fetch해 RSI/SMA200 전체 계산 후, 선택한 range(1mo~5y)는 표시 윈도우(`displayCount`)만 조정. 단기 범위에서도 RSI 타임라인 바 정상 표시. range 전환 시 캐시된 데이터 재사용 → 네트워크 재요청 없이 즉각 반응. `ChartData.displayCount` + `display*` 슬라이스 프로퍼티 추가. `ChartViewModel.fullData` 캐시 + `calcDisplayCount()` 추가 (초 단위 epoch 기준).
 - **v0.5.2 RSI 전략 매도 조건 구현**: `QuantSnapshot.status: MaStatus?` (null=중립). `QuantCalculator.compute()` BUY(`RSI<10`) / SELL(`RSI>70`) / null(그 외) 3상태. `ChartSignals.rsiSellIndices()` 추가. RSI 타임라인 바에 빨간 매도 신호 추가. 범례 "매수 신호 / 매도 신호"로 통일.
