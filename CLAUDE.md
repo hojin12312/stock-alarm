@@ -5,9 +5,12 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 **현재 들어 있는 앱**: 주식 알리미 (Stock Alarm) — 한·미 주식 검색 + 관심목록 + 5/20MA 교차 알림 + 차트 디테일.
 
-## 현재 상태 (2026-04-21 기준)
+## 현재 상태 (2026-04-24 기준)
 
-- **버전**: `v0.5.5` (versionCode 24)
+- **버전**: `v0.5.6` (versionCode 25)
+- **v0.5.6 배율 높은 폰 스크롤 이슈 수정**:
+  - **ChartContent 세로 스크롤**: `ChartContent.kt` 최상위 `Column` 에 `.verticalScroll(rememberScrollState())` 추가. 배율 높은 폰(font_scale 1.3 + density 540 등)에서 차트 카드 아래 매수/매도 타임라인 바·범례·데이터 범위 텍스트가 화면 밖으로 잘리던 문제 해결. 차트 카드 내부의 `detectTransformGestures` (pan.x/zoom) 는 그대로 두고 카드 **바깥** 영역(StatusHeader·range 칩·타임라인 바 등)에서 세로 스와이프로 스크롤. 실기 검증: 배율 올린 에뮬레이터에서 MA+RSI 동시 선택 상태 기준 범례 3줄 + "YYYY-MM-DD ~ YYYY-MM-DD · 데이터 N개" 모두 노출 확인.
+  - **DashboardScreen Column → LazyColumn 통합**: 최상위 `Column` 을 `LazyColumn` 하나로 교체하고 상단 헤더/알고리즘 칩/필터 Row/텍스트필드를 `item {}` 블록으로 이동. 기존 내부에 중첩돼 있던 `LazyColumn` 흡수. 배율 높을 때 상단 UI가 고정돼 검색창에 접근 못 하던 문제 해결. Empty 상태는 `Box(Modifier.fillParentMaxSize())` 로 전환.
 - **v0.5.5 Pull-to-Refresh + 차트 핀치줌/스크롤**:
   - **지수 탭 Pull-to-Refresh**: `MarketViewModel`에 `isRefreshing: StateFlow<Boolean>` 추가, `loadAll()` → `jobs.joinAll()` 구조로 완료 감지. `MarketScreen`에 `PullToRefreshContainer` + `nestedScrollConnection` 적용 (Material3 1.2.1 호환 방식).
   - **차트 핀치줌/드래그 스크롤**: `ChartData`에 `displayOffset: Int` 파라미터 추가, `display*` 슬라이스를 `subList(startIdx, startIdx + displayLen)` 기반으로 변경. `ChartContent`에 `zoomedCount` / `scrollOffset` 로컬 state + `detectTransformGestures` 제스처 처리 추가. range 칩 변경 시 줌·스크롤 초기화 (`LaunchedEffect(data.displayCount)`).

@@ -1,6 +1,6 @@
 {
-  "versionCode": 24,
-  "versionName": "0.5.5",
+  "versionCode": 25,
+  "versionName": "0.5.6",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.5.5 — 지수 탭 당겨서 새로고침 + 차트 핀치줌/드래그 스크롤 추가."
+  "notes": "v0.5.6 — 배율 높은 폰에서 차트 하단 매수/매도 타임라인 바가 잘려 보이지 않던 문제 수정 + 대시보드 상단 UI 스크롤 가능."
 }
