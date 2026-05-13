@@ -5,7 +5,10 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.playground.data.model.isOpenNow
+import com.example.playground.data.model.todayLocalDate
+import com.example.playground.data.repo.StockRepository
 import com.example.playground.di.ServiceLocator
+import com.example.playground.notification.Notifier
 
 class MaCrossoverWorker(
     appContext: Context,
@@ -16,21 +19,29 @@ class MaCrossoverWorker(
         val context = applicationContext
         val repo = ServiceLocator.provideRepository(context)
         val notifier = ServiceLocator.provideNotifier(context)
+        val settings = ServiceLocator.provideAppSettings(context)
+
+        val crossEnabled = settings.currentMaCrossNotifyEnabled()
+        val extremaEnabled = settings.currentMaExtremaNotifyEnabled()
 
         val updates = repo.refreshAll()
         var crossed = 0
         var skipped = 0
+        var extremaNotified = 0
         updates.forEach { update ->
-            // 장 시간 외에는 상태는 DB에 갱신되지만 알림은 발송하지 않음.
-            // 이유: 장외에 워커가 깨면서 어제 장중에 발생한 교차를 뒤늦게 감지해 새벽에 알림이 울리는 문제를 방지.
+            // Off-hours: refresh state in DB but suppress notifications,
+            // to avoid early-morning alerts catching up on yesterday's intraday crossover.
             val marketOpen = update.market.isOpenNow()
-            val hasSignal = update.crossed || (update.quantCrossed && update.quantSnapshot != null)
-            if (hasSignal && !marketOpen) {
+            val hasCrossSignal = update.crossed || (update.quantCrossed && update.quantSnapshot != null)
+            val hasExtremaSignal = update.extremaDirection != null && update.prevMa5 != null
+
+            if ((hasCrossSignal || hasExtremaSignal) && !marketOpen) {
                 skipped++
                 Log.d(TAG, "skip notify — ${update.symbol} ${update.market} closed")
                 return@forEach
             }
-            if (update.crossed) {
+
+            if (crossEnabled && update.crossed) {
                 crossed++
                 notifier.notifyCrossover(
                     symbol = update.symbol,
@@ -42,7 +53,7 @@ class MaCrossoverWorker(
                     market = update.market.name,
                 )
             }
-            if (update.quantCrossed && update.quantSnapshot != null) {
+            if (crossEnabled && update.quantCrossed && update.quantSnapshot != null) {
                 crossed++
                 notifier.notifyQuantSignal(
                     symbol = update.symbol,
@@ -54,8 +65,30 @@ class MaCrossoverWorker(
                     market = update.market.name,
                 )
             }
+            if (extremaEnabled && hasExtremaSignal) {
+                val today = update.market.todayLocalDate()
+                if (update.lastExtremaNotifyDate == today) {
+                    Log.d(TAG, "skip extrema — ${update.symbol} already notified today")
+                } else {
+                    extremaNotified++
+                    val direction = when (update.extremaDirection!!) {
+                        StockRepository.ExtremaDirection.LOW -> Notifier.Ma5ExtremaDirection.LOW
+                        StockRepository.ExtremaDirection.HIGH -> Notifier.Ma5ExtremaDirection.HIGH
+                    }
+                    notifier.notifyMa5Extrema(
+                        symbol = update.symbol,
+                        name = update.name,
+                        direction = direction,
+                        prevMa5 = update.prevMa5!!,
+                        currentMa5 = update.snapshot.ma5,
+                        close = update.close,
+                        market = update.market.name,
+                    )
+                    repo.markExtremaNotified(update.symbol, today)
+                }
+            }
         }
-        Log.i(TAG, "MaCrossoverWorker done — total=${updates.size}, crossed=$crossed, skipped=$skipped")
+        Log.i(TAG, "MaCrossoverWorker done — total=${updates.size}, crossed=$crossed, extrema=$extremaNotified, skipped=$skipped")
         return Result.success()
     }
 

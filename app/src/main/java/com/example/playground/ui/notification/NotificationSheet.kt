@@ -98,6 +98,11 @@ fun NotificationSheetContent(
                 onClick = { onTypeFilter("RSI") },
                 label = { Text("RSI") },
             )
+            FilterChip(
+                selected = filter.type == "MA_EXTREMA",
+                onClick = { onTypeFilter("MA_EXTREMA") },
+                label = { Text("5MA 극점") },
+            )
 
             Spacer(Modifier.width(4.dp))
 
@@ -266,9 +271,21 @@ private fun SwipeToDeleteItem(
 @Composable
 private fun NotificationCard(item: NotificationEntity) {
     val ext = AppColors.extended
-    val statusColor = if (item.status == "BUY") ext.buy else ext.sell
-    val typeLabel = if (item.type == "MA") "MA" else "RSI"
-    val statusLabel = if (item.status == "BUY") "매수" else "매도"
+    val isExtrema = item.type == "MA_EXTREMA"
+    val isBullish = if (isExtrema) item.status == "LOW" else item.status == "BUY"
+    val statusColor = if (isBullish) ext.buy else ext.sell
+    val typeLabel = when (item.type) {
+        "MA" -> "MA"
+        "RSI" -> "RSI"
+        "MA_EXTREMA" -> "5MA"
+        else -> item.type
+    }
+    val statusLabel = when {
+        isExtrema && item.status == "LOW" -> "저점"
+        isExtrema && item.status == "HIGH" -> "고점"
+        item.status == "BUY" -> "매수"
+        else -> "매도"
+    }
     val marketLabel = when (item.market) {
         "US" -> "🇺🇸"
         "KR" -> "🇰🇷"

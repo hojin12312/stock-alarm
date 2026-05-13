@@ -27,6 +27,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -104,6 +105,30 @@ fun SettingsScreen(
                         description = "공식 Open API, AppKey/Secret 필요",
                         selected = state.dataSource == DataSourceId.KIS,
                         onClick = { viewModel.selectDataSource(DataSourceId.KIS) },
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+            Text("알림 옵션", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "관심목록의 알림 종류를 켜고 끌 수 있어. 최소 하나는 켜둬야 해.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    NotifyOptionRow(
+                        title = "MA 5/20 교차 알림",
+                        description = "5MA·20MA 교차 시점에 매수/매도 전환 알림",
+                        checked = state.maCrossNotifyEnabled,
+                        onCheckedChange = viewModel::setMaCrossNotifyEnabled,
+                    )
+                    NotifyOptionRow(
+                        title = "5MA 극점 알림",
+                        description = "5MA 기울기 부호가 바뀐 순간(저점·고점) 알림 — 하루 최대 1회",
+                        checked = state.maExtremaNotifyEnabled,
+                        onCheckedChange = viewModel::setMaExtremaNotifyEnabled,
                     )
                 }
             }
@@ -260,6 +285,32 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NotifyOptionRow(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.Medium)
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.padding(horizontal = 8.dp))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

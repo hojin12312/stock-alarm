@@ -2,8 +2,10 @@ package com.example.playground.data.model
 
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 // 시장별 정규장 시간대. 공휴일은 반영하지 않음 — 휴장일에 알림이 안 뜨는 쪽은 치명적이지 않아서 의도적으로 제외.
 private val KR_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
@@ -24,4 +26,14 @@ fun Market.isOpenNow(now: Instant = Instant.now()): Boolean {
     if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) return false
     val time = local.toLocalTime()
     return !time.isBefore(open) && time.isBefore(close)
+}
+
+private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+fun Market.todayLocalDate(now: Instant = Instant.now()): String {
+    val zone = when (this) {
+        Market.KR -> KR_ZONE
+        Market.US -> US_ZONE
+    }
+    return LocalDate.ofInstant(now, zone).format(DATE_FORMATTER)
 }

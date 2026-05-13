@@ -114,6 +114,26 @@ class StockRepository(
             ?: return@runCatching RefreshOutcome.Skipped("insufficient data")
         val quantSnapshot = QuantCalculator.compute(closes)
         val close = closes.last()
+
+        // B-mode slope: sample SMA5 once per worker tick.
+        // prev slope  = (last ma5  - prev-prev ma5)  — both from DB (previous tick & the one before)
+        // curr slope  = (new ma5   - last ma5)        — this tick's change
+        // extremum    ⇔ prev * curr ≤ 0  (sign flipped or zero)
+        val prevPrevMa5 = entity.prevPrevMa5
+        val prevMa5 = entity.lastMa5
+        val newMa5 = maSnapshot.ma5
+        val extremaDirection: ExtremaDirection? = if (prevPrevMa5 != null && prevMa5 != null) {
+            val prevSlope = prevMa5 - prevPrevMa5
+            val currSlope = newMa5 - prevMa5
+            if (prevSlope * currSlope <= 0.0 && (prevSlope != 0.0 || currSlope != 0.0)) {
+                // turning point — direction = sign of the NEW slope
+                // currSlope ≥ 0 → low (down-then-up), currSlope ≤ 0 → high (up-then-down)
+                // when currSlope == 0 we fall back to prevSlope's opposite sign
+                val refSlope = if (currSlope != 0.0) currSlope else -prevSlope
+                if (refSlope >= 0.0) ExtremaDirection.LOW else ExtremaDirection.HIGH
+            } else null
+        } else null
+
         dao.updateSnapshot(
             symbol = symbol,
             ma5 = maSnapshot.ma5,
@@ -124,6 +144,7 @@ class StockRepository(
             quantStatus = quantSnapshot?.status,
             rsi2 = quantSnapshot?.rsi2,
             sma200 = quantSnapshot?.sma200,
+            prevPrevMa5 = prevMa5,
         )
         RefreshOutcome.Updated(
             symbol = entity.symbol,
@@ -136,11 +157,20 @@ class StockRepository(
             prevQuant = entity.lastQuantStatus,
             currentQuant = quantSnapshot?.status,
             quantSnapshot = quantSnapshot,
+            prevMa5 = prevMa5,
+            extremaDirection = extremaDirection,
+            lastExtremaNotifyDate = entity.lastExtremaNotifyDate,
         )
     }.getOrElse {
         Log.w(TAG, "refreshSnapshot($symbol) failed", it)
         RefreshOutcome.Skipped(it.message ?: "error")
     }
+
+    suspend fun markExtremaNotified(symbol: String, date: String) {
+        dao.markExtremaNotified(symbol, date)
+    }
+
+    enum class ExtremaDirection { HIGH, LOW }
 
     suspend fun refreshAll(): List<RefreshOutcome.Updated> {
         val all = dao.getAll()
@@ -162,6 +192,9 @@ class StockRepository(
             val prevQuant: MaStatus? = null,
             val currentQuant: MaStatus? = null,
             val quantSnapshot: QuantSnapshot? = null,
+            val prevMa5: Double? = null,
+            val extremaDirection: ExtremaDirection? = null,
+            val lastExtremaNotifyDate: String? = null,
         ) : RefreshOutcome {
             val crossed: Boolean get() = prev != null && prev != current
             val quantCrossed: Boolean get() = prevQuant != null && currentQuant != null && prevQuant != currentQuant

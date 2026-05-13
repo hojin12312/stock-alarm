@@ -42,14 +42,15 @@
 | `v0.5.3` | 22 | 차트 범위·신호 계산 분리 (항상 5y fetch, range는 표시 윈도우만 조정) |
 | `v0.5.4` | 23 | 지수 탭 신설 (코스피·코스닥·나스닥·다우·S&P 500·금·USD/KRW 7개) |
 | `v0.5.5` | 24 | 지수 탭 Pull-to-Refresh + 차트 핀치줌/드래그 스크롤 (`detectTransformGestures`) |
-| `v0.5.6` | **25** | 배율 높은 폰에서 차트 하단 매수/매도 타임라인 바가 잘려 보이지 않던 문제 수정 (ChartContent `verticalScroll`) + 대시보드 상단 UI 스크롤 가능 (Column → LazyColumn 통합) |
+| `v0.5.6` | 25 | 배율 높은 폰에서 차트 하단 매수/매도 타임라인 바가 잘려 보이지 않던 문제 수정 (ChartContent `verticalScroll`) + 대시보드 상단 UI 스크롤 가능 (Column → LazyColumn 통합) |
+| `v0.5.7` | **26** | 알림 옵션 추가 (MA 5/20 교차 알림 ON 기본, 5MA 극점 알림 OFF 기본, 최소 하나 가드). 5MA 극점 = 워커 호출 간 5MA 기울기 부호 변경 시점, 시장 시간대 기준 하루 최대 1회 |
 
 `v0.4.7` 부터는 [GitHub Releases](https://github.com/hojin12312/stock-alarm/releases) 에도 버전별 상세 노트가 등록된다. 이전 버전(`v0.4.6` 이하)은 이 표로만 확인.
 
 버전 값은 `app/build.gradle.kts`의 `defaultConfig`:
 ```kotlin
-versionCode = 25
-versionName = "0.5.6"
+versionCode = 26
+versionName = "0.5.7"
 ```
 
 ## 릴리스 절차 (새 버전 올릴 때)

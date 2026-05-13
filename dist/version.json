@@ -1,6 +1,6 @@
 {
-  "versionCode": 25,
-  "versionName": "0.5.6",
+  "versionCode": 26,
+  "versionName": "0.5.7",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.5.6 — 배율 높은 폰에서 차트 하단 매수/매도 타임라인 바가 잘려 보이지 않던 문제 수정 + 대시보드 상단 UI 스크롤 가능."
+  "notes": "v0.5.7 — 알림 옵션 추가: 설정 화면에서 'MA 5/20 교차 알림' / '5MA 극점 알림' 을 각각 켜고 끌 수 있어. 5MA 극점은 직전 워커 대비 5MA 기울기 부호가 바뀐 순간을 잡아 저점/고점 알림으로 보내. 종목 시장 시간대 기준 하루 최대 1회."
 }

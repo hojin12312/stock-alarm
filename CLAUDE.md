@@ -5,9 +5,17 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 **현재 들어 있는 앱**: 주식 알리미 (Stock Alarm) — 한·미 주식 검색 + 관심목록 + 5/20MA 교차 알림 + 차트 디테일.
 
-## 현재 상태 (2026-04-24 기준)
+## 현재 상태 (2026-05-13 기준)
 
-- **버전**: `v0.5.6` (versionCode 25)
+- **버전**: `v0.5.7` (versionCode 26)
+- **v0.5.7 알림 옵션 + 5MA 극점 알림**:
+  - **AppSettings 키 2개 추가**: `maCrossNotifyEnabled` (디폴트 true), `maExtremaNotifyEnabled` (디폴트 false). `booleanPreferencesKey` 로 DataStore 저장. `Settings ViewModel` 에서 두 Flow 구독 + setter 가 "둘 다 false 금지" 가드.
+  - **5MA 극점 감지 (워커 호출 간 기울기 방식)**: `WatchlistEntity` 에 `prevPrevMa5: Double?` + `lastExtremaNotifyDate: String?` 컬럼 추가. `MIGRATION_4_5` (DB v5). `StockRepository.refreshSnapshot()` 가 prevSlope=(lastMa5 − prevPrevMa5), currentSlope=(newMa5 − lastMa5) 계산 후 `prevSlope * currentSlope ≤ 0` 이면 극점 판정. 방향은 새 기울기 부호(>=0 → LOW, <0 → HIGH). `RefreshOutcome.Updated` 에 `prevMa5/extremaDirection/lastExtremaNotifyDate` 필드 노출.
+  - **하루 1회 가드**: `Market.todayLocalDate(now)` (KR=Asia/Seoul, US=America/New_York 시간대) 로 yyyy-MM-dd 생성. 워커에서 `lastExtremaNotifyDate == today` 면 알림 스킵, 아니면 알림 + `markExtremaNotified(symbol, today)` 갱신.
+  - **알림 분기**: `MaCrossoverWorker` / `DashboardViewModel.refreshNow` 가 모두 두 옵션 `currentMa*NotifyEnabled()` 를 읽어 분기. 장 시각 게이팅(`isOpenNow()`)은 두 종류 모두 동일 적용.
+  - **Notifier**: `notifyMa5Extrema(symbol, name, direction, prevMa5, currentMa5, close, market)` 추가. `Notifier.Ma5ExtremaDirection.LOW`/`HIGH`. 알림 채널은 기존 `CHANNEL_MA` 재사용. `NotificationEntity.type = "MA_EXTREMA"`, `status = "LOW"`/`"HIGH"`.
+  - **Settings UI**: "알림 옵션" 섹션 카드에 `Switch` 2개 (`NotifyOptionRow`). 마지막 하나 끄려고 하면 ViewModel 이 error 메시지 세팅 → Snackbar "알림 옵션은 최소 하나는 켜둬야 해" 노출 + 스위치 상태 유지. 실기 검증: 토글/가드/디폴트 복원 모두 동작.
+  - **알림 탭**: `NotificationSheet` 에 "5MA 극점" 필터 칩 추가. `NotificationCard` 가 type=MA_EXTREMA 일 때 typeLabel="5MA", statusLabel="저점"/"고점", LOW=buy색·HIGH=sell색. 매수/매도 필터는 BUY+LOW / SELL+HIGH 둘 다 포함되도록 `NotificationViewModel.items` 결합 로직 확장.
 - **v0.5.6 배율 높은 폰 스크롤 이슈 수정**:
   - **ChartContent 세로 스크롤**: `ChartContent.kt` 최상위 `Column` 에 `.verticalScroll(rememberScrollState())` 추가. 배율 높은 폰(font_scale 1.3 + density 540 등)에서 차트 카드 아래 매수/매도 타임라인 바·범례·데이터 범위 텍스트가 화면 밖으로 잘리던 문제 해결. 차트 카드 내부의 `detectTransformGestures` (pan.x/zoom) 는 그대로 두고 카드 **바깥** 영역(StatusHeader·range 칩·타임라인 바 등)에서 세로 스와이프로 스크롤. 실기 검증: 배율 올린 에뮬레이터에서 MA+RSI 동시 선택 상태 기준 범례 3줄 + "YYYY-MM-DD ~ YYYY-MM-DD · 데이터 N개" 모두 노출 확인.
   - **DashboardScreen Column → LazyColumn 통합**: 최상위 `Column` 을 `LazyColumn` 하나로 교체하고 상단 헤더/알고리즘 칩/필터 Row/텍스트필드를 `item {}` 블록으로 이동. 기존 내부에 중첩돼 있던 `LazyColumn` 흡수. 배율 높을 때 상단 UI가 고정돼 검색창에 접근 못 하던 문제 해결. Empty 상태는 `Box(Modifier.fillParentMaxSize())` 로 전환.

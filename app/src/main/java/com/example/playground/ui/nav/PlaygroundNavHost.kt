@@ -188,8 +188,9 @@ fun PlaygroundApp() {
                     }
                     composable(Destination.Dashboard.route) {
                         val notifier = ServiceLocator.provideNotifier(context)
+                        val settings = ServiceLocator.provideAppSettings(context)
                         val vm: DashboardViewModel = viewModel(
-                            factory = DashboardViewModel.Factory(repo, notifier),
+                            factory = DashboardViewModel.Factory(repo, notifier, settings),
                         )
                         DashboardScreen(
                             viewModel = vm,

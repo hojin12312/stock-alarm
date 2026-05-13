@@ -8,6 +8,8 @@ import com.example.playground.data.model.MaStatus
 import com.example.playground.data.model.Market
 import com.example.playground.data.model.WatchedStock
 import com.example.playground.data.model.isOpenNow
+import com.example.playground.data.model.todayLocalDate
+import com.example.playground.data.prefs.AppSettings
 import com.example.playground.data.repo.StockRepository
 import com.example.playground.notification.Notifier
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +59,7 @@ data class DashboardUiState(
 class DashboardViewModel(
     private val repo: StockRepository,
     private val notifier: Notifier,
+    private val settings: AppSettings,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardUiState())
@@ -91,13 +94,17 @@ class DashboardViewModel(
         if (_state.value.refreshing) return
         _state.value = _state.value.copy(refreshing = true)
         viewModelScope.launch {
+            val crossEnabled = settings.currentMaCrossNotifyEnabled()
+            val extremaEnabled = settings.currentMaExtremaNotifyEnabled()
             val updates = repo.refreshAll()
             updates.forEach { update ->
-                // 장외엔 알림 스킵 (MaCrossoverWorker 와 동일 정책)
+                // Mirror MaCrossoverWorker policy: suppress notifications off-hours, keep DB fresh.
                 val marketOpen = update.market.isOpenNow()
-                val hasSignal = update.crossed || (update.quantCrossed && update.quantSnapshot != null)
-                if (hasSignal && !marketOpen) return@forEach
-                if (update.crossed) {
+                val hasCrossSignal = update.crossed || (update.quantCrossed && update.quantSnapshot != null)
+                val hasExtremaSignal = update.extremaDirection != null && update.prevMa5 != null
+                if ((hasCrossSignal || hasExtremaSignal) && !marketOpen) return@forEach
+
+                if (crossEnabled && update.crossed) {
                     notifier.notifyCrossover(
                         symbol = update.symbol,
                         name = update.name,
@@ -108,7 +115,7 @@ class DashboardViewModel(
                         market = update.market.name,
                     )
                 }
-                if (update.quantCrossed && update.quantSnapshot != null) {
+                if (crossEnabled && update.quantCrossed && update.quantSnapshot != null) {
                     notifier.notifyQuantSignal(
                         symbol = update.symbol,
                         name = update.name,
@@ -118,6 +125,25 @@ class DashboardViewModel(
                         close = update.close,
                         market = update.market.name,
                     )
+                }
+                if (extremaEnabled && hasExtremaSignal) {
+                    val today = update.market.todayLocalDate()
+                    if (update.lastExtremaNotifyDate != today) {
+                        val direction = when (update.extremaDirection!!) {
+                            StockRepository.ExtremaDirection.LOW -> Notifier.Ma5ExtremaDirection.LOW
+                            StockRepository.ExtremaDirection.HIGH -> Notifier.Ma5ExtremaDirection.HIGH
+                        }
+                        notifier.notifyMa5Extrema(
+                            symbol = update.symbol,
+                            name = update.name,
+                            direction = direction,
+                            prevMa5 = update.prevMa5!!,
+                            currentMa5 = update.snapshot.ma5,
+                            close = update.close,
+                            market = update.market.name,
+                        )
+                        repo.markExtremaNotified(update.symbol, today)
+                    }
                 }
             }
             _state.value = _state.value.copy(
@@ -130,9 +156,10 @@ class DashboardViewModel(
     class Factory(
         private val repo: StockRepository,
         private val notifier: Notifier,
+        private val settings: AppSettings,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            DashboardViewModel(repo, notifier) as T
+            DashboardViewModel(repo, notifier, settings) as T
     }
 }

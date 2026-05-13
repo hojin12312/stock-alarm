@@ -62,6 +62,47 @@ class Notifier(
         )
     }
 
+    suspend fun notifyMa5Extrema(
+        symbol: String,
+        name: String,
+        direction: Ma5ExtremaDirection,
+        prevMa5: Double,
+        currentMa5: Double,
+        close: Double,
+        market: String = "",
+    ) {
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val label = if (direction == Ma5ExtremaDirection.LOW) "저점" else "고점"
+        val title = "[5MA $label 형성] $name ($symbol)"
+        val body = "5MA ${formatNumber(prevMa5)} → ${formatNumber(currentMa5)} · 종가 ${formatNumber(close)}"
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_MA)
+            .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(launchIntent())
+            .build()
+
+        nm.notify((symbol + "_extrema").hashCode(), notification)
+
+        notificationDao.insert(
+            NotificationEntity(
+                symbol = symbol,
+                name = name,
+                type = "MA_EXTREMA",
+                status = if (direction == Ma5ExtremaDirection.LOW) "LOW" else "HIGH",
+                market = market,
+                detail = body,
+                createdAt = System.currentTimeMillis(),
+            )
+        )
+    }
+
+    enum class Ma5ExtremaDirection { LOW, HIGH }
+
     suspend fun notifyQuantSignal(
         symbol: String,
         name: String,

@@ -29,6 +29,8 @@ data class SettingsUiState(
     val error: String? = null,
     val checkingUpdate: Boolean = false,
     val pendingUpdate: UpdateInfo? = null,
+    val maCrossNotifyEnabled: Boolean = true,
+    val maExtremaNotifyEnabled: Boolean = false,
 )
 
 class SettingsViewModel(
@@ -52,6 +54,28 @@ class SettingsViewModel(
         settings.kisTokenExpiresAt
             .onEach { t -> _state.value = _state.value.copy(kisTokenExpiresAt = t) }
             .launchIn(viewModelScope)
+        settings.maCrossNotifyEnabled
+            .onEach { v -> _state.value = _state.value.copy(maCrossNotifyEnabled = v) }
+            .launchIn(viewModelScope)
+        settings.maExtremaNotifyEnabled
+            .onEach { v -> _state.value = _state.value.copy(maExtremaNotifyEnabled = v) }
+            .launchIn(viewModelScope)
+    }
+
+    fun setMaCrossNotifyEnabled(enabled: Boolean) {
+        if (!enabled && !_state.value.maExtremaNotifyEnabled) {
+            _state.value = _state.value.copy(error = "알림 옵션은 최소 하나는 켜둬야 해")
+            return
+        }
+        viewModelScope.launch { settings.setMaCrossNotifyEnabled(enabled) }
+    }
+
+    fun setMaExtremaNotifyEnabled(enabled: Boolean) {
+        if (!enabled && !_state.value.maCrossNotifyEnabled) {
+            _state.value = _state.value.copy(error = "알림 옵션은 최소 하나는 켜둬야 해")
+            return
+        }
+        viewModelScope.launch { settings.setMaExtremaNotifyEnabled(enabled) }
     }
 
     fun onKeyInput(v: String) {

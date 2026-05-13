@@ -34,7 +34,8 @@ interface WatchlistDao {
             lastUpdatedAt = :updatedAt,
             lastQuantStatus = :quantStatus,
             lastRsi2 = :rsi2,
-            lastSma200 = :sma200
+            lastSma200 = :sma200,
+            prevPrevMa5 = :prevPrevMa5
         WHERE symbol = :symbol
         """
     )
@@ -48,5 +49,9 @@ interface WatchlistDao {
         quantStatus: MaStatus? = null,
         rsi2: Double? = null,
         sma200: Double? = null,
+        prevPrevMa5: Double? = null,
     )
+
+    @Query("UPDATE watchlist SET lastExtremaNotifyDate = :date WHERE symbol = :symbol")
+    suspend fun markExtremaNotified(symbol: String, date: String)
 }

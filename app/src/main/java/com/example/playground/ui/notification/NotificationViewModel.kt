@@ -34,7 +34,13 @@ class NotificationViewModel(
     val items: StateFlow<List<NotificationEntity>> = combine(allItems, _filter) { list, f ->
         list.filter { item ->
             val typeOk = f.type == null || item.type == f.type
-            val statusOk = f.status == null || item.status == f.status
+            // BUY filter also matches MA_EXTREMA LOW (bullish turning point); SELL also matches HIGH.
+            val statusOk = when (f.status) {
+                null -> true
+                "BUY" -> item.status == "BUY" || item.status == "LOW"
+                "SELL" -> item.status == "SELL" || item.status == "HIGH"
+                else -> item.status == f.status
+            }
             val marketOk = f.market == null || item.market == f.market
             typeOk && statusOk && marketOk
         }
