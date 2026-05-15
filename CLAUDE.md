@@ -5,9 +5,12 @@ Android Studio GUI 없이 편집→빌드→설치→실행→스크린샷까지
 
 **현재 들어 있는 앱**: 주식 알리미 (Stock Alarm) — 한·미 주식 검색 + 관심목록 + 5/20MA 교차 알림 + 차트 디테일.
 
-## 현재 상태 (2026-05-13 기준)
+## 현재 상태 (2026-05-15 기준)
 
-- **버전**: `v0.5.7` (versionCode 26)
+- **버전**: `v0.5.8` (versionCode 27)
+- **v0.5.8 5MA 극점 오탐 수정**:
+  - **원인**: `YahooFinanceDataSource.fetchCloses()`가 Yahoo Finance API 응답에서 장중 미확정 봉(오늘 현재가)을 포함한 closes를 반환 → MA5 기울기가 확정 종가 기준과 달리 계산되어 `prevSlope × currSlope ≤ 0` 조건이 잘못 만족됨.
+  - **수정**: `result.timestamp`와 close를 인덱스로 매핑 후 마켓 시간대(KR=Asia/Seoul, US=America/New_York) 기준 오늘 날짜 이후 봉을 제외. 확정 종가만 MA5 계산에 사용.
 - **v0.5.7 알림 옵션 + 5MA 극점 알림**:
   - **AppSettings 키 2개 추가**: `maCrossNotifyEnabled` (디폴트 true), `maExtremaNotifyEnabled` (디폴트 false). `booleanPreferencesKey` 로 DataStore 저장. `Settings ViewModel` 에서 두 Flow 구독 + setter 가 "둘 다 false 금지" 가드.
   - **5MA 극점 감지 (워커 호출 간 기울기 방식)**: `WatchlistEntity` 에 `prevPrevMa5: Double?` + `lastExtremaNotifyDate: String?` 컬럼 추가. `MIGRATION_4_5` (DB v5). `StockRepository.refreshSnapshot()` 가 prevSlope=(lastMa5 − prevPrevMa5), currentSlope=(newMa5 − lastMa5) 계산 후 `prevSlope * currentSlope ≤ 0` 이면 극점 판정. 방향은 새 기울기 부호(>=0 → LOW, <0 → HIGH). `RefreshOutcome.Updated` 에 `prevMa5/extremaDirection/lastExtremaNotifyDate` 필드 노출.
