@@ -6,6 +6,9 @@ import com.example.playground.data.model.Market
 import com.example.playground.data.model.StockSearchResult
 import com.example.playground.data.remote.YahooFinanceApi
 import com.example.playground.domain.MaCalculator
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 class YahooFinanceDataSource(
     private val api: YahooFinanceApi,
@@ -50,7 +53,15 @@ class YahooFinanceDataSource(
         val res = api.chart(symbol = symbol, range = "1y")
         val result = res.chart.result?.firstOrNull() ?: return emptyList()
         val raw = result.indicators?.quote?.firstOrNull()?.close ?: return emptyList()
-        return raw.filterNotNull()
+        val timestamps = result.timestamp
+        val zone = if (market == Market.KR) ZoneId.of("Asia/Seoul") else ZoneId.of("America/New_York")
+        val today = LocalDate.now(zone)
+        // Exclude today's unconfirmed bar (intraday close) to prevent false MA5 slope changes.
+        return raw.mapIndexed { i, c ->
+            if (c == null) return@mapIndexed null
+            val ts = timestamps.getOrNull(i) ?: return@mapIndexed c
+            if (Instant.ofEpochSecond(ts).atZone(zone).toLocalDate() >= today) null else c
+        }.filterNotNull()
     }
 
     override suspend fun fetchChart(

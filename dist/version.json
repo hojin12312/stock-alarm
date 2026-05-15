@@ -1,6 +1,6 @@
 {
-  "versionCode": 26,
-  "versionName": "0.5.7",
+  "versionCode": 27,
+  "versionName": "0.5.8",
   "apkUrl": "https://raw.githubusercontent.com/hojin12312/stock-alarm/main/dist/stock-alarm-debug.apk",
-  "notes": "v0.5.7 — 알림 옵션 추가: 설정 화면에서 'MA 5/20 교차 알림' / '5MA 극점 알림' 을 각각 켜고 끌 수 있어. 5MA 극점은 직전 워커 대비 5MA 기울기 부호가 바뀐 순간을 잡아 저점/고점 알림으로 보내. 종목 시장 시간대 기준 하루 최대 1회."
+  "notes": "v0.5.8 — 5MA 극점 오탐 수정: 장중 미확정 봉(현재가)을 MA5 계산에서 제외해서 장중 노이즈로 잘못된 저점/고점 알림이 발송되던 문제를 고쳤어."
 }
